@@ -1,8 +1,94 @@
-/* Minimal styling; add Tailwind if desired */
-* { box-sizing: border-box; }
-body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji; }
-table { border-collapse: collapse; width: 100%; }
-th, td { border-bottom: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-.card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-.btn { display: inline-block; padding: 6px 10px; border-radius: 8px; border: 1px solid #e5e7eb; background: #111827; color: white; text-decoration: none; }
-.tag { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #eef2ff; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ====== Pro/Tech Theme base ====== */
+@layer base {
+  :root {
+    --bg: #0b1220;            /* deep navy */
+    --panel: rgba(17, 24, 39, 0.6);
+    --border: rgba(148, 163, 184, 0.15);
+    --text: #e5e7eb;          /* slate-200 */
+    --muted: #9aa4b2;         /* slate-400 */
+    --brand: #7c3aed;         /* violet-600 */
+    --brand-2: #06b6d4;       /* cyan-500 */
+    --accent: #4f46e5;        /* indigo-600 */
+    --radius: 16px;
+    --container: 1180px;
+    --shadow: 0 12px 50px rgba(0,0,0,.35);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply text-slate-200;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(124,58,237,.25), transparent 60%),
+      radial-gradient(1000px 600px at 0% 0%, rgba(6,182,212,.18), transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      linear-gradient(transparent 0, rgba(255,255,255,.03) 1px),
+      linear-gradient(90deg, transparent 0, rgba(255,255,255,.03) 1px);
+    background-size: 100% 28px, 28px 100%;
+    -webkit-mask-image: radial-gradient(1200px 600px at 50% -10%, black, transparent 70%);
+            mask-image: radial-gradient(1200px 600px at 50% -10%, black, transparent 70%);
+  }
+  header {
+    position: sticky; top: 0; z-index: 30;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px) saturate(1.1);
+    background: linear-gradient(180deg, rgba(13,18,32,.8), rgba(13,18,32,.55));
+  }
+}
+
+@layer components {
+  .container { @apply max-w-[1180px] mx-auto px-5; }
+  .muted { color: var(--muted); }
+
+  /* Branding / text */
+  .brand {
+    background: linear-gradient(90deg, #fff, #b7c0ce 40%, #8ab7ff 70%, #fff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    @apply font-extrabold tracking-wide;
+  }
+  .grad {
+    background: linear-gradient(90deg, #c084fc, #60a5fa 45%, #22d3ee 85%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .pill { @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold;
+    background: rgba(124,58,237,.12); color: #c4b5fd; border-color: rgba(124,58,237,.35);
+  }
+
+  /* Cards & buttons */
+  .card { @apply rounded-2xl p-6; background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .btn { @apply inline-flex items-center gap-2 rounded-xl px-4 py-3 font-bold border transition; border-color: var(--border);
+    background: rgba(255,255,255,.03);
+  }
+  .btn svg { @apply w-4 h-4; }
+  .btn:hover { box-shadow: 0 0 0 6px rgba(99,102,241,.07); transform: translateY(-1px); }
+  .btn-primary { color: white; border-color: transparent; background: linear-gradient(90deg, var(--accent), var(--brand-2)); }
+  .btn-outline { color: #cbd5e1; }
+
+  /* Hero */
+  .hero { position: relative; isolation: isolate; }
+  .hero-title { @apply font-extrabold; font-size: clamp(38px, 7vw, 64px); line-height: 1.05; }
+  .lead { @apply text-lg; color: var(--muted); }
+
+  /* Feature list */
+  .tick { @apply inline-grid place-items-center rounded-full; width:20px; height:20px; background: rgba(34,197,94,.2); color: #4ade80; }
+  .list { @apply list-none p-0 mt-3 space-y-2; }
+  .icon { @apply inline-grid place-items-center rounded-lg; width:36px; height:36px; background: linear-gradient(180deg, rgba(99,102,241,.25), rgba(6,182,212,.25)); border:1px solid rgba(148,163,184,.2); }
+
+  /* Layout helpers */
+  .row { @apply flex items-center justify-between gap-4 flex-wrap; }
+  .section { @apply py-24; }
+  .section-title { font-size: clamp(28px, 4vw, 44px); }
+  .section-sub { color: var(--muted); }
+}
