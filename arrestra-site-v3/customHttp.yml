@@ -1,0 +1,78 @@
+customHeaders:
+  # Root doc
+  - pattern: '/'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=0, s-maxage=0, must-revalidate
+      - key: Content-Security-Policy
+        value: "default-src 'self' https:; connect-src 'self' https://l4l62sdqhvh6fmp7fqd52cadjy0lokmf.lambda-url.us-west-2.on.aws; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https: data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+      - key: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains; preload
+
+  # All HTML (disable edge/browser caching)
+  - pattern: '/**/*.html'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=0, s-maxage=0, must-revalidate
+
+  # Long-cache, immutable assets (hash your filenames)
+  - pattern: '/**/*.js'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.mjs'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.css'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.png'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.jpg'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.jpeg'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.webp'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.svg'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.gif'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.ico'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.woff2'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.woff'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.ttf'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - pattern: '/**/*.eot'
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
