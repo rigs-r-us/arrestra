@@ -12,3 +12,10 @@ build/
 .env*
 .DS_Store
 
+node_modules/
+.next/
+dist/
+build/
+.env*
+.DS_Store
+
