@@ -1,111 +1,61 @@
-                           ┌────────────────────────────────────────────────┐
-                           │                 Public Web                     │
-                           │      (Attorneys / Firms / API Clients)         │
-                           └────────────────────────────────────────────────┘
-                                               │
-                            HTTPS requests to firm subdomains (e.g. smithlaw.arrestra.com)
-                                               │
-                                               ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                        🌩️ AWS Amplify (Hosting + SSR)                                  │
-│  - Hosts Next.js App (App Router)                                                       │
-│  - Handles API routes (/api/leads/*, /api/auth/*) as AWS Lambda functions              │
-│  - Uses CloudFront + ACM for wildcard SSL (*.arrestra.com)                             │
-│                                                                                        │
-│       ┌──────────────────────┐       ┌────────────────────────────┐                    │
-│       │ Next.js Frontend UI  │       │ Next.js API Routes (SSR)  │                    │
-│       │ - Login, Dashboard   │◄─────►│ - /api/leads/ingest       │                    │
-│       │ - Settings per firm  │       │ - /api/leads/enrich/*     │                    │
-│       │ - Status updates     │       │ - /api/leads/export       │                    │
-│       └──────────────────────┘       └────────────────────────────┘                    │
-│                                                                                        │
-│                  ▲                                                       ▲             │
-│                  │                                                       │             │
-│     Auth via NextAuth + Prisma Adapter                           Enrichment API Calls  │
-│                  │                                                       │             │
-└──────────────────┼───────────────────────────────────────────────────────┼─────────────┘
-                   │                                                       │
-                   │                                                       │
-                   ▼                                                       ▼
-     ┌────────────────────────┐                         ┌──────────────────────────────┐
-     │     PostgreSQL DB      │                         │   External Enrichment APIs   │
-     │ (RDS / Neon / Railway) │                         │ ──────────────────────────── │
-     │────────────────────────│                         │ • Twilio Lookup API          │
-     │ Tenants                │                         │   - Validates phone numbers  │
-     │ Domains                │                         │ • Kickbox API               │
-     │ Users (NextAuth)       │                         │   - Verifies email quality   │
-     │ Leads + Enrichments    │                         │ • Future APIs:              │
-     │ LeadEvents (audit log) │                         │   - Jail roster             │
-     │                        │                         │   - Docket / case data      │
-     └────────────────────────┘                         └──────────────────────────────┘
-                   ▲
-                   │
-                   │
-           Prisma Client ORM
-          (used by API + Auth)
-                   │
-                   ▼
-       ┌──────────────────────────┐
-       │   Background Workers     │
-       │  (AWS Lambda / CronJob)  │
-       │ ───────────────────────  │
-       │ • topics-travis.ts       │
-       │   - Scrapes TOPICs site  │
-       │   - Calls /api/leads/ingest
-       │ • (Future: county bots)  │
-       └──────────────────────────┘
+flowchart LR
+  %% ====== Arrestra Multi-Tenant Architecture (Amplify) ======
+  %% Style tweaks
+  classDef cloud fill:#f0f7ff,stroke:#6aa0ff,color:#0b3d91
+  classDef db fill:#f7f5ff,stroke:#8b5cf6,color:#312e81
+  classDef box fill:#fff,stroke:#94a3b8,color:#0f172a
+  classDef ext fill:#fff7ed,stroke:#fb923c,color:#7c2d12
+  classDef worker fill:#ecfeff,stroke:#06b6d4,color:#083344
 
----
+  %% Public web
+  A[("Public Web<br/>(Attorneys • Firms • API Clients)<br/><small>firm.arrestra.com</small>")]:::box
 
-### 🔑 **Data Flow Summary**
+  %% Amplify hosting (Next.js app + API)
+  subgraph B[AWS Amplify Hosting + SSR<br/><small>CloudFront + Lambda@Edge</small>]
+    direction TB
+    B1[Next.js Frontend (App Router)<br/><small>Login • Dashboard • Settings</small>]:::box
+    B2[Next.js API Routes<br/><small>/api/leads/ingest<br/>/api/leads/enrich/*<br/>/api/leads/status<br/>/api/leads/export</small>]:::box
+    B3[Middleware<br/><small>Resolve tenant from subdomain → set x-tenant-id</small>]:::box
+  end
+  class B cloud
 
-1. **Lead Intake**
-   - Worker (e.g., `topics-travis.ts`) scrapes the TOPICs bail data.
-   - Sends a POST → `/api/leads/ingest` with tenant API key.
-   - Amplify (Next.js API route) inserts the lead → `Lead` + event log.
+  %% Database
+  C[(PostgreSQL)<br/><small>RDS / Neon / Railway</small>]:::db
+  C1[[Prisma ORM]]:::box
+  C2[[NextAuth Adapter]]:::box
 
-2. **Lead Enrichment**
-   - Either on-demand or via a scheduled worker.
-   - Calls `/api/leads/enrich/contact`.
-   - Invokes **Twilio Lookup** + **Kickbox**, stores results in `Enrichment` + `LeadEvent`.
+  %% External enrichment
+  subgraph D[External Enrichment APIs]
+    D1[Twilio Lookup<br/><small>phone validity + line type</small>]:::ext
+    D2[Kickbox<br/><small>email deliverability</small>]:::ext
+    D3[Future: Jail Roster / Dockets]:::ext
+  end
 
-3. **Firm Dashboard**
-   - Attorney logs in via subdomain (`firm.arrestra.com`).
-   - NextAuth verifies credentials scoped to that firm’s tenant.
-   - Dashboard fetches all tenant-scoped leads with enrichment data.
+  %% Background workers
+  subgraph E[Background Workers / Cron]
+    E1[topics-travis.ts<br/><small>scrape TOPICs → POST /api/leads/ingest</small>]:::worker
+    E2[Future: county bots / queues]:::worker
+  end
 
-4. **Pipeline Management**
-   - Firms can change lead statuses (`/api/leads/status`).
-   - All changes logged as `LeadEvent`.
+  %% Flows
+  A -->|"HTTPS to firm subdomain"| B3 --> B1
+  B1 -->|"Auth (credentials)"| C2
+  B2 -->|"Prisma Client"| C1 --> C
 
-5. **Export / Reporting**
-   - CSV export endpoint → `/api/leads/export`.
-   - Firms can download enriched lead data for offline CRM sync.
+  %% API calls to external services
+  B2 -->|"Enrichment calls"| D1
+  B2 -->|"Enrichment calls"| D2
+  B2 -. optional .-> D3
 
----
+  %% Workers push leads in
+  E1 -->|"x-api-key scoped ingest"| B2
+  E2 -.-> B2
 
-### 🏗️ **Multi-Tenant Isolation Model**
-
-| Layer | Isolation Mechanism |
-|-------|---------------------|
-| **Domain/Subdomain** | `*.arrestra.com` wildcard → tenant inferred from subdomain |
-| **Auth** | Users scoped by `tenantId` in DB |
-| **DB Rows** | Tenant-scoped `tenantId` foreign key on all sensitive tables |
-| **API Access** | Tenant `apiKey` required for ingestion/enrichment |
-| **Enrichment Calls** | Per-tenant rate limits possible in future |
-
----
-
-### 🚀 **Scalability Plan**
-
-| Concern | Approach |
-|----------|-----------|
-| **Hosting** | Amplify auto-scales Lambdas; edge-cached assets via CloudFront |
-| **Database** | Postgres vertical scaling → read replicas (RDS) |
-| **Workers** | Move scrapers/enrichers to AWS Lambda or ECS Fargate |
-| **Subdomains** | Wildcard DNS; dynamic tenant routing via middleware |
-| **Future Add-ons** | SQS queue for async enrichments, SNS alerts, S3 for evidence files |
-
----
-- 🧠 **Mermaid (Markdown-ready)** diagram, or  
-- 🖼️ **Visual PNG system diagram** (Amplify, DB, APIs, flow arrows)?
+  %% Tenant isolation notes
+  note right of B3
+    Multi-tenant:
+    • subdomain → Tenant/Domain
+    • x-tenant-id header
+    • DB rows scoped by tenantId
+    • Ingest/enrich require per-tenant apiKey
+  end
