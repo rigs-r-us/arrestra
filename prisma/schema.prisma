@@ -1,0 +1,103 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  apiKey    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  domains   Domain[]
+  users     User[]
+  leads     Lead[]
+}
+model Domain {
+  id        String   @id @default(cuid())
+  domain    String   @unique
+  primary   Boolean  @default(true)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+enum Role { ADMIN ATTORNEY STAFF }
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  hashedPassword String
+  role           Role     @default(STAFF)
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+}
+enum LeadStatus { NEW QUALIFIED CONTACTED IN_PROGRESS CLOSED_WON CLOSED_LOST }
+model Lead {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  source      String
+  firstName   String?
+  lastName    String?
+  phone       String?
+  email       String?
+  county      String?
+  caseNumber  String?
+  arrestDate  DateTime?
+  charge      String?
+  bondAmount  Int?
+  notes       String?
+  status      LeadStatus  @default(NEW)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  enrichments Enrichment[]
+  events      LeadEvent[]
+}
+model Enrichment {
+  id        String   @id @default(cuid())
+  provider  String
+  score     Int      @default(0)
+  data      Json
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+model LeadEvent {
+  id        String   @id @default(cuid())
+  type      String
+  metadata  Json
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+model Account {
+  id String @id @default(cuid())
+  userId String
+  type String
+  provider String
+  providerAccountId String
+  refresh_token String? @db.Text
+  access_token String?  @db.Text
+  expires_at Int?
+  token_type String?
+  scope String?
+  id_token String? @db.Text
+  session_state String?
+  oauth_token_secret String? @db.Text
+  oauth_token String? @db.Text
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+model Session {
+  id String @id @default(cuid())
+  sessionToken String @unique
+  userId String
+  expires DateTime
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model VerificationToken {
+  identifier String
+  token String @unique
+  expires DateTime
+  @@unique([identifier, token])
+}

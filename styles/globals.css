@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root { color-scheme: light; }
+body { min-height: 100vh; background: white; color: #0f172a; }
+.container { max-width: 72rem; margin: 0 auto; padding: 2rem 1rem; }
+.card { border-radius: 1rem; border: 1px solid #e2e8f0; padding: 1.5rem; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.btn { padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; box-shadow: 0 1px 0 rgba(0,0,0,0.02); }
+.input { width: 100%; border: 1px solid #cbd5e1; border-radius: 0.75rem; padding: 0.5rem 0.75rem; }
+.table { width: 100%; font-size: 0.9rem; }
+.table th { text-align: left; border-bottom: 1px solid #e2e8f0; padding: 0.5rem 0; }
+.table td { border-bottom: 1px solid #f1f5f9; padding: 0.5rem 0; }
+.badge { font-size: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 9999px; background: #f8fafc; border: 1px solid #e2e8f0; }
