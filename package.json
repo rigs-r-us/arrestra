@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
+    "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "lint": "eslint ."
   },
