@@ -11,7 +11,7 @@ export async function getTenantFromRequest() {
   const parts = host.split(':')[0].split('.');
   if (parts.length > 2) {
     const sub = parts[0];
-    const domain = await prisma.domain.findUnique({ where: { domain: sub } }).catch(()=>null);
+    const domain = await prisma.domain.findFirst({ where: { hostname: sub } }).catch(() => null);
     if (domain) return prisma.tenant.findUnique({ where: { id: domain.tenantId } });
     const t = await prisma.tenant.findUnique({ where: { slug: sub } });
     if (t) return t;
