@@ -21,11 +21,10 @@ model Tenant {
 }
 
 model Domain {
-  id       String @id @default(cuid())
-  hostname String @unique
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
+  id        String   @id @default(cuid())
+  hostname  String   @unique
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
