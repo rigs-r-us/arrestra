@@ -1,8 +1,10 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
-import { prisma } from './db';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -15,20 +17,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // Defensive checks + type narrowing
-        const email = credentials?.email;
-        const password = credentials?.password;
+        const email = credentials?.email as string | undefined;
+        const password = credentials?.password as string | undefined;
 
-        if (typeof email !== 'string' || typeof password !== 'string') {
-          return null;
-        }
+        if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
-        if (!user) return null;
-
-        if (!user.hashedPassword) return null;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.hashedPassword) return null;
 
         const ok = await bcrypt.compare(password, user.hashedPassword);
         if (!ok) return null;
@@ -43,22 +38,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        // @ts-ignore
-        token.tenantId = user.tenantId;
-        // @ts-ignore
-        token.role = user.role;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      // @ts-ignore
-      session.user.tenantId = token.tenantId;
-      // @ts-ignore
-      session.user.role = token.role;
-      return session;
-    },
-  },
 });
