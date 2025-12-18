@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   basePath: "/api/auth",
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [
