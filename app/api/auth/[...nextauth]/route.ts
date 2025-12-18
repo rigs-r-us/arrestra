@@ -1,4 +1,4 @@
-import { handlers } from "@/src/lib/auth";
+import { handlers } from "@/lib/auth";
 
 export const runtime = "nodejs"; // 🔴 REQUIRED ON AMPLIFY
 export const dynamic = "force-dynamic";
