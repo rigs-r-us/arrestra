@@ -30,6 +30,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.hashedPassword);
         if (!ok) return null;
 
+        const secret = process.env.AUTH_SECRET;
+        if (!secret) throw new Error("Missing AUTH_SECRET at runtime");
+
+
         return { id: user.id, email: user.email, name: user.name };
       },
     }),
