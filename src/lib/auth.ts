@@ -4,10 +4,12 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db"; // <-- use your singleton db.ts (recommended)
 
-const secret =
-  process.env.AUTH_SECRET ??
-  process.env.NEXTAUTH_SECRET ??
-  process.env.AUTHJS_SECRET;
+const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
+if (!secret) {
+  // throws the same error, but now you KNOW it’s env injection
+  throw new Error("Missing secret: set AUTH_SECRET (or NEXTAUTH_SECRET) in Amplify runtime env");
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // For Amplify / CloudFront this is usually needed:
