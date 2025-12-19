@@ -1,15 +1,25 @@
-export function mustGetEnv(name: string): string {
+function getEnv(name: string): string | undefined {
   const v = process.env[name];
-  if (!v || v.trim().length === 0) {
-    throw new Error(`Missing required env var: ${name}`);
-  }
+  return v && v.trim().length > 0 ? v : undefined;
+}
+
+export function mustGetEnv(name: string): string {
+  const v = getEnv(name);
+  if (!v) throw new Error(`Missing required env var: ${name}`);
   return v;
 }
 
+// ✅ Lazy getters (do not throw at import)
 export const env = {
-  AUTH_URL: mustGetEnv("AUTH_URL"),
-  AUTH_SECRET: mustGetEnv("AUTH_SECRET"),
-  DATABASE_URL: mustGetEnv("DATABASE_URL"),
-  AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST === "true",
-  NEXTAUTH_DEBUG: process.env.NEXTAUTH_DEBUG === "true",
+  // Use NEXTAUTH_URL for Auth.js/NextAuth
+  authUrl: () => getEnv("AUTH_URL") ?? getEnv("NEXTAUTH_URL"),
+
+  // Use whichever secret you actually set in Amplify
+  authSecret: () =>
+    getEnv("AUTH_SECRET") ?? getEnv("NEXTAUTH_SECRET") ?? getEnv("AUTHJS_SECRET"),
+
+  databaseUrl: () => getEnv("DATABASE_URL"),
+
+  trustHost: () => getEnv("AUTH_TRUST_HOST") === "true",
+  debug: () => getEnv("NEXTAUTH_DEBUG") === "true",
 };
