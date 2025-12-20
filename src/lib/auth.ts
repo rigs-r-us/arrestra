@@ -4,17 +4,19 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 
-function getAuthSecret() {
-  return (
-    process.env.AUTH_SECRET ??
-    process.env.NEXTAUTH_SECRET ??
-    process.env.AUTHJS_SECRET
-  );
-}
+/**
+ * IMPORTANT:
+ * Do NOT throw if secret is missing at import time.
+ * Amplify SSR injects env vars at runtime, not build time.
+ */
+const secret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  process.env.AUTHJS_SECRET ??
+  "dev-placeholder-secret-for-build"; // safe fallback for build only
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // IMPORTANT: don't crash module import; auth library will error if missing at runtime
-  secret: getAuthSecret(),
+  secret,
   trustHost: true,
   basePath: "/api/auth",
   adapter: PrismaAdapter(prisma),
@@ -38,7 +40,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.hashedPassword);
         if (!ok) return null;
 
-        return { id: user.id, email: user.email, name: user.name };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        };
       },
     }),
   ],
