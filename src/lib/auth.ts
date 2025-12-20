@@ -1,17 +1,21 @@
+// src/lib/auth.ts
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 
-const secret = process.env.NEXTAUTH_SECRET;
+// IMPORTANT: do NOT throw at module import time
+const secret =
+  process.env.AUTH_SECRET ??
+  process.env.NEXTAUTH_SECRET ??
+  process.env.AUTHJS_SECRET ??
+  "";
 
-if (!secret) {
-  throw new Error("Missing NEXTAUTH_SECRET at runtime");
-}
-
+// Build-safe: don't crash build if secret isn't injected in build env.
+// Runtime-safe: NextAuth will error if secret is empty *when called*.
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret,
+  secret: secret || undefined, // <-- avoids passing empty string
   trustHost: true,
   basePath: "/api/auth",
   adapter: PrismaAdapter(prisma),
@@ -35,7 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.hashedPassword);
         if (!ok) return null;
 
-        return { id: user.id, email: user.email, name: user.name ?? undefined };
+        return { id: user.id, email: user.email ?? "", name: user.name ?? "" };
       },
     }),
   ],
