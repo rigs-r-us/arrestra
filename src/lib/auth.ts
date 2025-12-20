@@ -4,13 +4,14 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 
-const secret =
-  process.env.AUTH_SECRET ??
-  process.env.NEXTAUTH_SECRET ??
-  process.env.AUTHJS_SECRET;
+const secret = process.env.NEXTAUTH_SECRET;
+
+if (!secret) {
+  throw new Error("Missing NEXTAUTH_SECRET at runtime");
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret,                // <-- relies on runtime env
+  secret,
   trustHost: true,
   basePath: "/api/auth",
   adapter: PrismaAdapter(prisma),
@@ -34,7 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.hashedPassword);
         if (!ok) return null;
 
-        return { id: user.id, email: user.email, name: user.name };
+        return { id: user.id, email: user.email, name: user.name ?? undefined };
       },
     }),
   ],
