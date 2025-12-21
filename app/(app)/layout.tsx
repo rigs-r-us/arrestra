@@ -1,4 +1,4 @@
-import '~/app/globals.css';
+import "../styles/globals.css";
 import Link from "next/link";
 import { Button } from "@/src/components/ui/button";
 import { Separator } from "@/src/components/ui/separator";
