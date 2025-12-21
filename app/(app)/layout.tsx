@@ -1,7 +1,7 @@
 import "../styles/globals.css";
 import Link from "next/link";
-import { Button } from "@/src/components/ui/button";
-import { Separator } from "@/src/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
