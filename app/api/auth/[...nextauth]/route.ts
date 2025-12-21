@@ -1,6 +1,6 @@
-// app/api/auth/[...nextauth]/route.ts
+import { handlers } from "@/app/lib/auth";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-import { handlers } from "@/lib/auth";
 export const { GET, POST } = handlers;
