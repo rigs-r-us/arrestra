@@ -1,9 +1,9 @@
-import "../styles/globals.css";
-import type { Metadata } from 'next';
+import "@/styles/globals.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Arrestra App',
-  description: 'Lead management for criminal defense firms',
+  title: "Arrestra App",
+  description: "Lead management for criminal defense firms",
 };
 
 export default function RootLayout({
