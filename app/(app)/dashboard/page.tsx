@@ -2,23 +2,6 @@ import { prisma } from '../../../src/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-function PriorityBadge({ priority }: { priority: string }) {
-  const p = priority?.toUpperCase() || 'LOW';
-
-  const classes =
-    p === 'HOT'
-      ? 'bg-red-100 text-red-800 border-red-200'
-      : p === 'WARM'
-        ? 'bg-orange-100 text-orange-800 border-orange-200'
-        : 'bg-gray-100 text-gray-700 border-gray-200';
-
-  return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${classes}`}>
-      {p}
-    </span>
-  );
-}
-
 function formatDate(date: Date | null) {
   if (!date) return '—';
 
@@ -29,33 +12,41 @@ function formatDate(date: Date | null) {
   }).format(date);
 }
 
-function priorityBadge(priority: string) {
+function PriorityBadge({ priority }: { priority: string | null }) {
+  const p = priority?.toUpperCase() || 'LOW';
+
   const styles: Record<string, React.CSSProperties> = {
     HOT: {
       background: '#fee2e2',
       color: '#991b1b',
+      border: '1px solid #fecaca',
     },
     WARM: {
-      background: '#fef3c7',
-      color: '#92400e',
+      background: '#ffedd5',
+      color: '#9a3412',
+      border: '1px solid #fdba74',
     },
     LOW: {
-      background: '#e5e7eb',
+      background: '#f3f4f6',
       color: '#374151',
+      border: '1px solid #d1d5db',
     },
   };
 
   return (
     <span
       style={{
-        padding: '4px 8px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '4px 10px',
         borderRadius: 999,
         fontSize: 12,
         fontWeight: 700,
-        ...(styles[priority] || styles.LOW),
+        letterSpacing: 0.3,
+        ...(styles[p] || styles.LOW),
       }}
     >
-      {priority}
+      {p}
     </span>
   );
 }
@@ -78,8 +69,10 @@ export default async function DashboardPage() {
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
           Arrestra Lead Dashboard
         </h1>
+
         <p style={{ color: '#6b7280' }}>
-          View ingested arrest and bail-form leads from TOPICs and future sources.
+          View ingested arrest and bail-form leads from TOPICs and future
+          sources.
         </p>
       </div>
 
@@ -121,7 +114,12 @@ export default async function DashboardPage() {
             }}
           >
             <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+              <tr
+                style={{
+                  textAlign: 'left',
+                  borderBottom: '1px solid #e5e7eb',
+                }}
+              >
                 <th style={thStyle}>Priority</th>
                 <th style={thStyle}>Score</th>
                 <th style={thStyle}>Name</th>
@@ -134,18 +132,44 @@ export default async function DashboardPage() {
 
             <tbody>
               {leads.map((lead) => (
-                <tr key={lead.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                  <td style={tdStyle}>{priorityBadge(lead.priority)}</td>
-                  <td style={tdStyle}>{lead.score}</td>
+                <tr
+                  key={lead.id}
+                  style={{
+                    borderBottom: '1px solid #f3f4f6',
+                  }}
+                >
                   <td style={tdStyle}>
-                    <strong>{lead.fullName || 'Unknown'}</strong>
+                    <PriorityBadge priority={lead.priority} />
                   </td>
+
+                  <td style={tdStyle}>
+                    <strong>{lead.score ?? 0}</strong>
+                  </td>
+
+                  <td style={tdStyle}>
+                    <strong>
+                      {[lead.firstName, lead.lastName]
+                        .filter(Boolean)
+                        .join(' ') || 'Unknown'}
+                    </strong>
+                  </td>
+
                   <td style={tdStyle}>{lead.county || '—'}</td>
-                  <td style={{ ...tdStyle, maxWidth: 420 }}>
+
+                  <td
+                    style={{
+                      ...tdStyle,
+                      maxWidth: 420,
+                    }}
+                  >
                     {lead.charge || '—'}
                   </td>
+
                   <td style={tdStyle}>{lead.source}</td>
-                  <td style={tdStyle}>{formatDate(lead.createdAt)}</td>
+
+                  <td style={tdStyle}>
+                    {formatDate(lead.createdAt)}
+                  </td>
                 </tr>
               ))}
 
