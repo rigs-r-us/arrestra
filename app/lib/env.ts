@@ -1,13 +1,17 @@
-function getEnv(name: string): string | undefined {
+function mustGetEnv(name: string): string {
   const v = process.env[name];
-  return v && v.trim().length > 0 ? v : undefined;
-}
-
-export function mustGetEnv(name: string): string {
-  const v = getEnv(name);
-  if (!v) throw new Error(`Missing required env var: ${name}`);
+  if (!v || v.trim() === "") {
+    throw new Error(`Missing required env var: ${name}`);
+  }
   return v;
 }
+
+export const env = {
+  AUTH_SECRET: mustGetEnv("AUTH_SECRET"),
+  AUTH_URL: mustGetEnv("AUTH_URL"),
+  DATABASE_URL: mustGetEnv("DATABASE_URL"),
+};
+
 
 // ✅ Lazy getters (do not throw at import)
 export const env = {
