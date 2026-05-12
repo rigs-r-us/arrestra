@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start -p 3000",
     "scrape:topics:travis": "ts-node workers/scrapers/topics-travis.ts",
+    "scrape:topics:travis:mock": "MOCK_TRAVIS_INGEST=true ARRESTRA_API_KEY=demo-api-key ts-node workers/scrapers/topics-travis.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
