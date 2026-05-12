@@ -127,6 +127,7 @@ export default async function DashboardPage() {
                 <th style={thStyle}>Charge</th>
                 <th style={thStyle}>Source</th>
                 <th style={thStyle}>Created</th>
+                <th style={thStyle}>Action</th>
               </tr>
             </thead>
 
@@ -171,12 +172,86 @@ export default async function DashboardPage() {
                   <td style={tdStyle}>
                     {formatDate(lead.createdAt)}
                   </td>
+
+                  <td style={tdStyle}>
+                    <details>
+                      <summary style={viewButtonStyle}>View</summary>
+
+                      <div style={drawerBackdropStyle}>
+                        <div style={drawerStyle}>
+                          <div style={drawerHeaderStyle}>
+                            <div>
+                              <p style={labelStyle}>Lead Details</p>
+                              <h2 style={{ fontSize: 24, fontWeight: 800 }}>
+                                {[lead.firstName, lead.lastName]
+                                  .filter(Boolean)
+                                  .join(' ') || 'Unknown'}
+                              </h2>
+                            </div>
+
+                            <PriorityBadge priority={lead.priority} />
+                          </div>
+
+                          <div style={drawerSectionStyle}>
+                            <h3 style={drawerSectionTitleStyle}>Case Snapshot</h3>
+                            <div style={detailGridStyle}>
+                              <div>
+                                <p style={detailLabelStyle}>Score</p>
+                                <p style={detailValueStyle}>{lead.score ?? 0}</p>
+                              </div>
+                              <div>
+                                <p style={detailLabelStyle}>County</p>
+                                <p style={detailValueStyle}>{lead.county || '—'}</p>
+                              </div>
+                              <div>
+                                <p style={detailLabelStyle}>Source</p>
+                                <p style={detailValueStyle}>{lead.source}</p>
+                              </div>
+                              <div>
+                                <p style={detailLabelStyle}>Created</p>
+                                <p style={detailValueStyle}>{formatDate(lead.createdAt)}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={drawerSectionStyle}>
+                            <h3 style={drawerSectionTitleStyle}>Charge</h3>
+                            <p style={{ lineHeight: 1.6 }}>{lead.charge || '—'}</p>
+                          </div>
+
+                          <div style={drawerSectionStyle}>
+                            <h3 style={drawerSectionTitleStyle}>Compliance Guidance</h3>
+                            <div style={complianceGridStyle}>
+                              <div style={allowedCardStyle}>Direct Mail ✅</div>
+                              <div style={blockedCardStyle}>Cold SMS ❌</div>
+                              <div style={blockedCardStyle}>Cold Call ❌</div>
+                              <div style={blockedCardStyle}>Cold Email ❌</div>
+                            </div>
+                            <p style={{ marginTop: 12, color: '#6b7280', fontSize: 13 }}>
+                              Use this as product guidance only. Law firms should confirm local advertising and solicitation rules with counsel.
+                            </p>
+                          </div>
+
+                          <div style={drawerSectionStyle}>
+                            <h3 style={drawerSectionTitleStyle}>Recommended Next Action</h3>
+                            <p style={{ lineHeight: 1.6 }}>
+                              {lead.priority === 'HOT'
+                                ? 'Prioritize this lead for immediate direct-mail outreach and attorney review.'
+                                : lead.priority === 'WARM'
+                                  ? 'Queue this lead for standard direct-mail outreach.'
+                                  : 'Keep this lead in the database, but deprioritize active outreach.'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </details>
+                  </td>
                 </tr>
               ))}
 
               {leads.length === 0 && (
                 <tr>
-                  <td style={tdStyle} colSpan={7}>
+                  <td style={tdStyle} colSpan={8}>
                     No leads found yet.
                   </td>
                 </tr>
@@ -217,4 +292,94 @@ const thStyle: React.CSSProperties = {
 const tdStyle: React.CSSProperties = {
   padding: '14px 8px',
   verticalAlign: 'top',
+};
+
+const viewButtonStyle: React.CSSProperties = {
+  cursor: 'pointer',
+  color: '#2563eb',
+  fontWeight: 700,
+  listStyle: 'none',
+};
+
+const drawerBackdropStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(17, 24, 39, 0.35)',
+  zIndex: 50,
+};
+
+const drawerStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  right: 0,
+  height: '100vh',
+  width: 'min(520px, 100vw)',
+  overflowY: 'auto',
+  background: '#ffffff',
+  borderLeft: '1px solid #e5e7eb',
+  padding: 24,
+  boxShadow: '-12px 0 32px rgba(0,0,0,0.12)',
+};
+
+const drawerHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: 16,
+  alignItems: 'flex-start',
+  borderBottom: '1px solid #e5e7eb',
+  paddingBottom: 16,
+  marginBottom: 20,
+};
+
+const drawerSectionStyle: React.CSSProperties = {
+  border: '1px solid #e5e7eb',
+  borderRadius: 14,
+  padding: 16,
+  marginBottom: 16,
+};
+
+const drawerSectionTitleStyle: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 800,
+  marginBottom: 12,
+};
+
+const detailGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: 12,
+};
+
+const detailLabelStyle: React.CSSProperties = {
+  color: '#6b7280',
+  fontSize: 12,
+  marginBottom: 4,
+};
+
+const detailValueStyle: React.CSSProperties = {
+  fontWeight: 700,
+};
+
+const complianceGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: 8,
+};
+
+const allowedCardStyle: React.CSSProperties = {
+  background: '#ecfdf5',
+  color: '#065f46',
+  border: '1px solid #a7f3d0',
+  borderRadius: 10,
+  padding: 10,
+  fontWeight: 700,
+};
+
+const blockedCardStyle: React.CSSProperties = {
+  background: '#fef2f2',
+  color: '#991b1b',
+  border: '1px solid #fecaca',
+  borderRadius: 10,
+  padding: 10,
+  fontWeight: 700,
 };
