@@ -2,6 +2,23 @@ import { prisma } from '../../../src/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+function PriorityBadge({ priority }: { priority: string }) {
+  const p = priority?.toUpperCase() || 'LOW';
+
+  const classes =
+    p === 'HOT'
+      ? 'bg-red-100 text-red-800 border-red-200'
+      : p === 'WARM'
+        ? 'bg-orange-100 text-orange-800 border-orange-200'
+        : 'bg-gray-100 text-gray-700 border-gray-200';
+
+  return (
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${classes}`}>
+      {p}
+    </span>
+  );
+}
+
 function formatDate(date: Date | null) {
   if (!date) return '—';
 
