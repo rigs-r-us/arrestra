@@ -136,6 +136,7 @@ export default async function DashboardPage() {
                   key={lead.id}
                   style={{
                     borderBottom: '1px solid #f3f4f6',
+                    background: lead.priority === 'HOT' ? '#fef2f2' : 'transparent',
                   }}
                 >
                   <td style={tdStyle}>
