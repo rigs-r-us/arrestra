@@ -1,91 +1,178 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { prisma } from '@/src/lib/db';
 
-function KpiCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <Card className="relative overflow-hidden border-border/70 bg-card/60">
-      {/* subtle red accent */}
-      <div className="pointer-events-none absolute -top-24 right-0 h-40 w-40 rounded-full bg-primary/10 blur-2xl" />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex items-end justify-between">
-        <div className="text-3xl font-semibold tracking-tight">{value}</div>
-        {hint ? (
-          <Badge variant="secondary" className="bg-accent/60 text-muted-foreground">
-            {hint}
-          </Badge>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
+export const dynamic = 'force-dynamic';
+
+function formatDate(date: Date | null) {
+  if (!date) return '—';
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
 }
 
-function EmptyLeadsState() {
+function priorityBadge(priority: string) {
+  const styles: Record<string, React.CSSProperties> = {
+    HOT: {
+      background: '#fee2e2',
+      color: '#991b1b',
+    },
+    WARM: {
+      background: '#fef3c7',
+      color: '#92400e',
+    },
+    LOW: {
+      background: '#e5e7eb',
+      color: '#374151',
+    },
+  };
+
   return (
-    <Card className="border-border/70 bg-card/60">
-      <CardHeader>
-        <CardTitle className="text-base">Recent leads</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          No leads yet. When your scraper starts ingesting, they’ll show up here.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href="/leads">Go to Leads</Link>
-          </Button>
-          <Button asChild variant="secondary" className="bg-accent/60">
-            <Link href="/settings">Connect integrations</Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <span
+      style={{
+        padding: '4px 8px',
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 700,
+        ...(styles[priority] || styles.LOW),
+      }}
+    >
+      {priority}
+    </span>
   );
 }
 
 export default async function DashboardPage() {
-  // Later: replace with real query (tenant-aware) -> const leads = await ...
-  const hasLeads = false;
+  const leads = await prisma.lead.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 100,
+  });
+
+  const totalLeads = leads.length;
+  const hotLeads = leads.filter((lead) => lead.priority === 'HOT').length;
+  const warmLeads = leads.filter((lead) => lead.priority === 'WARM').length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Pipeline overview for your firm.
+    <main style={{ padding: 24 }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
+          Arrestra Lead Dashboard
+        </h1>
+        <p style={{ color: '#6b7280' }}>
+          View ingested arrest and bail-form leads from TOPICs and future sources.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="New leads" value="0" hint="today" />
-        <KpiCard label="Qualified" value="0" hint="today" />
-        <KpiCard label="Contacted" value="0" hint="7 days" />
-        <KpiCard label="Won" value="0" hint="30 days" />
-      </div>
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 16,
+          marginBottom: 24,
+        }}
+      >
+        <div style={cardStyle}>
+          <p style={labelStyle}>Total Leads</p>
+          <h2 style={metricStyle}>{totalLeads}</h2>
+        </div>
 
-      {hasLeads ? (
-        <Card className="border-border/70 bg-card/60">
-          <CardHeader>
-            <CardTitle className="text-base">Recent leads</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            (Next) We’ll render a shadcn Table here fed by GET /api/leads.
-          </CardContent>
-        </Card>
-      ) : (
-        <EmptyLeadsState />
-      )}
-    </div>
+        <div style={cardStyle}>
+          <p style={labelStyle}>Hot Leads</p>
+          <h2 style={metricStyle}>{hotLeads}</h2>
+        </div>
+
+        <div style={cardStyle}>
+          <p style={labelStyle}>Warm Leads</p>
+          <h2 style={metricStyle}>{warmLeads}</h2>
+        </div>
+      </section>
+
+      <section style={cardStyle}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>
+          Recent Leads
+        </h2>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: 14,
+            }}
+          >
+            <thead>
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+                <th style={thStyle}>Priority</th>
+                <th style={thStyle}>Score</th>
+                <th style={thStyle}>Name</th>
+                <th style={thStyle}>County</th>
+                <th style={thStyle}>Charge</th>
+                <th style={thStyle}>Source</th>
+                <th style={thStyle}>Created</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {leads.map((lead) => (
+                <tr key={lead.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <td style={tdStyle}>{priorityBadge(lead.priority)}</td>
+                  <td style={tdStyle}>{lead.score}</td>
+                  <td style={tdStyle}>
+                    <strong>{lead.fullName || 'Unknown'}</strong>
+                  </td>
+                  <td style={tdStyle}>{lead.county || '—'}</td>
+                  <td style={{ ...tdStyle, maxWidth: 420 }}>
+                    {lead.charge || '—'}
+                  </td>
+                  <td style={tdStyle}>{lead.source}</td>
+                  <td style={tdStyle}>{formatDate(lead.createdAt)}</td>
+                </tr>
+              ))}
+
+              {leads.length === 0 && (
+                <tr>
+                  <td style={tdStyle} colSpan={7}>
+                    No leads found yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
   );
 }
+
+const cardStyle: React.CSSProperties = {
+  background: '#ffffff',
+  border: '1px solid #e5e7eb',
+  borderRadius: 16,
+  padding: 20,
+  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+};
+
+const labelStyle: React.CSSProperties = {
+  color: '#6b7280',
+  fontSize: 14,
+  marginBottom: 8,
+};
+
+const metricStyle: React.CSSProperties = {
+  fontSize: 32,
+  fontWeight: 800,
+};
+
+const thStyle: React.CSSProperties = {
+  padding: '12px 8px',
+  color: '#6b7280',
+  fontWeight: 700,
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '14px 8px',
+  verticalAlign: 'top',
+};
