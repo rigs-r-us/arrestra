@@ -123,11 +123,11 @@ export default async function DashboardPage() {
                 <th style={thStyle}>Priority</th>
                 <th style={thStyle}>Score</th>
                 <th style={thStyle}>Name</th>
+                <th style={thStyle}>Action</th>
                 <th style={thStyle}>County</th>
                 <th style={thStyle}>Charge</th>
                 <th style={thStyle}>Source</th>
                 <th style={thStyle}>Created</th>
-                <th style={thStyle}>Action</th>
               </tr>
             </thead>
 
@@ -154,23 +154,6 @@ export default async function DashboardPage() {
                         .filter(Boolean)
                         .join(' ') || 'Unknown'}
                     </strong>
-                  </td>
-
-                  <td style={tdStyle}>{lead.county || '—'}</td>
-
-                  <td
-                    style={{
-                      ...tdStyle,
-                      maxWidth: 420,
-                    }}
-                  >
-                    {lead.charge || '—'}
-                  </td>
-
-                  <td style={tdStyle}>{lead.source}</td>
-
-                  <td style={tdStyle}>
-                    {formatDate(lead.createdAt)}
                   </td>
 
                   <td style={tdStyle}>
@@ -245,6 +228,23 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                     </details>
+                  </td>
+
+                  <td style={tdStyle}>{lead.county || '—'}</td>
+
+                  <td
+                    style={{
+                      ...tdStyle,
+                      maxWidth: 420,
+                    }}
+                  >
+                    {lead.charge || '—'}
+                  </td>
+
+                  <td style={tdStyle}>{lead.source}</td>
+
+                  <td style={tdStyle}>
+                    {formatDate(lead.createdAt)}
                   </td>
                 </tr>
               ))}
