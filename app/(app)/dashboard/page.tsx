@@ -11,9 +11,25 @@ async function updateLeadStatus(formData: FormData) {
 
   if (!leadId) return;
 
+  const existingLead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { status: true },
+  });
+
   await prisma.lead.update({
     where: { id: leadId },
     data: { status: status as any },
+  });
+
+  await prisma.leadEvent.create({
+    data: {
+      leadId,
+      type: 'STATUS_CHANGED',
+      metadata: {
+        from: existingLead?.status ?? null,
+        to: status,
+      },
+    },
   });
 
   revalidatePath('/dashboard');
@@ -49,6 +65,12 @@ export default async function DashboardPage() {
   const leads = await prisma.lead.findMany({
     orderBy: { createdAt: 'desc' },
     take: 100,
+    include: {
+      events: {
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      },
+    },
   });
 
   const totalLeads = leads.length;
@@ -168,19 +190,59 @@ export default async function DashboardPage() {
                               <input type="hidden" name="leadId" value={lead.id} />
 
                               <select name="status" defaultValue={lead.status} style={inputStyle}>
-                              <option value="NEW">NEW</option>
-                              <option value="MAILED">MAILED</option>
-                              <option value="QUALIFIED">QUALIFIED</option>
-                              <option value="RETAINED">RETAINED</option>
-                              <option value="CLOSED_WON">CLOSED_WON</option>
-                              <option value="CLOSED_LOST">CLOSED_LOST</option>
-                              <option value="DISMISSED">DISMISSED</option>
+                                <option value="NEW">NEW</option>
+                                <option value="MAILED">MAILED</option>
+                                <option value="QUALIFIED">QUALIFIED</option>
+                                <option value="RETAINED">RETAINED</option>
+                                <option value="CLOSED_WON">CLOSED_WON</option>
+                                <option value="CLOSED_LOST">CLOSED_LOST</option>
+                                <option value="DISMISSED">DISMISSED</option>
                               </select>
 
                               <button type="submit" style={buttonStyle}>
                                 Save Status
                               </button>
                             </form>
+                          </div>
+
+                          <div style={drawerSectionStyle}>
+                            <h3 style={drawerSectionTitleStyle}>Activity Timeline</h3>
+
+                            {lead.events.length === 0 ? (
+                              <p style={{ color: '#6b7280', fontSize: 14 }}>
+                                No activity yet.
+                              </p>
+                            ) : (
+                              <div style={{ display: 'grid', gap: 12 }}>
+                                {lead.events.map((event) => (
+                                  <div
+                                    key={event.id}
+                                    style={{
+                                      borderLeft: '3px solid #2563eb',
+                                      paddingLeft: 12,
+                                      paddingBottom: 4,
+                                    }}
+                                  >
+                                    <p style={{ fontWeight: 700 }}>
+                                      {event.type === 'STATUS_CHANGED'
+                                        ? 'Status changed'
+                                        : event.type}
+                                    </p>
+
+                                    <p style={{ color: '#6b7280', fontSize: 13, marginTop: 2 }}>
+                                      {formatDate(event.createdAt)}
+                                    </p>
+
+                                    {event.type === 'STATUS_CHANGED' && event.metadata && (
+                                      <p style={{ marginTop: 4, fontSize: 14 }}>
+                                        {(event.metadata as any)?.from || '—'} →{' '}
+                                        {(event.metadata as any)?.to || '—'}
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
 
                           <div style={drawerSectionStyle}>
