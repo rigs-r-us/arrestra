@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { prisma } from '../../../../../src/lib/db';
+import { prisma } from '../../../../src/lib/db';
 
 function csvEscape(value: unknown) {
   const str = String(value ?? '');
