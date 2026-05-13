@@ -1,35 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { prisma } from '../../../src/lib/db';
+      <section style={cardStyle}>
+        <div style={sectionHeaderStyle}>
+          <h2 style={{ fontSize: 20, fontWeight: 700 }}>
+            Recent Leads
+          </h2>
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
+          <a href="/api/leads/export" style={exportButtonStyle}>
+            Export CSV
+          </a>
+        </div>
+const sectionHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 16,
+  marginBottom: 16,
+};
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const dbUser = await prisma.user.findUnique({
-    where: { email: session.user.email as string },
-    select: { tenantId: true },
-  });
-
-  if (!dbUser?.tenantId) {
-    return NextResponse.json(
-      { error: 'User has no tenant associated' },
-      { status: 403 },
-    );
-  }
-
-  const url = new URL(req.url);
-  const limitParam = url.searchParams.get('limit');
-  const limit = Math.min(Number(limitParam || '50') || 50, 200);
-
-  const leads = await prisma.lead.findMany({
-    where: { tenantId: dbUser.tenantId },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-  });
-
-  return NextResponse.json({ leads });
-}
+const exportButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1px solid #111827',
+  borderRadius: 10,
+  padding: '10px 16px',
+  background: '#111827',
+  color: '#ffffff',
+  fontWeight: 700,
+  fontSize: 14,
+  textDecoration: 'none',
+};
