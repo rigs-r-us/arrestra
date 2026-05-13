@@ -168,12 +168,13 @@ export default async function DashboardPage() {
                               <input type="hidden" name="leadId" value={lead.id} />
 
                               <select name="status" defaultValue={lead.status} style={inputStyle}>
-                                <option value="NEW">NEW</option>
-                                <option value="QUALIFIED">QUALIFIED</option>
-                                <option value="CONTACTED">CONTACTED</option>
-                                <option value="IN_PROGRESS">IN_PROGRESS</option>
-                                <option value="CLOSED_WON">CLOSED_WON</option>
-                                <option value="CLOSED_LOST">CLOSED_LOST</option>
+                              <option value="NEW">NEW</option>
+                              <option value="MAILED">MAILED</option>
+                              <option value="QUALIFIED">QUALIFIED</option>
+                              <option value="RETAINED">RETAINED</option>
+                              <option value="CLOSED_WON">CLOSED_WON</option>
+                              <option value="CLOSED_LOST">CLOSED_LOST</option>
+                              <option value="DISMISSED">DISMISSED</option>
                               </select>
 
                               <button type="submit" style={buttonStyle}>
