@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from "@/lib/auth";
-import { prisma } from '../../../src/lib/db';
+import { auth } from '@/lib/auth';
+import { prisma } from '../../../../../src/lib/db';
+
+function csvEscape(value: unknown) {
+  const str = String(value ?? '');
+  return `"${str.replace(/"/g, '""')}"`;
+}
 
 export async function GET(req: NextRequest) {
-  // 1) Make sure user is logged in
   const session = await auth();
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const email = session.user.email as string;
-
-  // 2) Look up the user in the DB to get tenantId
   const dbUser = await prisma.user.findUnique({
-    where: { email },
+    where: { email: session.user.email as string },
     select: { tenantId: true },
   });
 
@@ -25,20 +26,59 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const tenantId = dbUser.tenantId;
-
-  // 3) Read optional query params for future filtering
   const url = new URL(req.url);
-  const limitParam = url.searchParams.get('limit');
-  const limit = Math.min(Number(limitParam || '50') || 50, 200);
+  const status = url.searchParams.get('status');
+  const priority = url.searchParams.get('priority');
+  const limit = Math.min(
+    Number(url.searchParams.get('limit') || '500') || 500,
+    1000,
+  );
 
-  // 4) Fetch leads for this tenant
   const leads = await prisma.lead.findMany({
-    where: { tenantId },
+    where: {
+      tenantId: dbUser.tenantId,
+      ...(status ? { status: status as any } : {}),
+      ...(priority ? { priority } : {}),
+    },
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
 
-  // 5) Return JSON
-  return NextResponse.json({ leads });
+  const headers = [
+    'First Name',
+    'Last Name',
+    'County',
+    'Charge',
+    'Priority',
+    'Score',
+    'Status',
+    'Source',
+    'Created At',
+  ];
+
+  const rows = leads.map((lead) => [
+    lead.firstName,
+    lead.lastName,
+    lead.county,
+    lead.charge,
+    lead.priority,
+    lead.score,
+    lead.status,
+    lead.source,
+    lead.createdAt.toISOString(),
+  ]);
+
+  const csv = [
+    headers.map(csvEscape).join(','),
+    ...rows.map((row) => row.map(csvEscape).join(',')),
+  ].join('\n');
+
+  return new NextResponse(csv, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition':
+        'attachment; filename="arrestra-direct-mail-export.csv"',
+    },
+  });
 }
