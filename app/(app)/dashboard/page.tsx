@@ -16,6 +16,11 @@ async function updateLeadStatus(formData: FormData) {
     select: { status: true },
   });
 
+  if (existingLead?.status === status) {
+    revalidatePath('/dashboard');
+    return;
+  }
+
   await prisma.lead.update({
     where: { id: leadId },
     data: { status: status as any },
@@ -45,18 +50,50 @@ function formatDate(date: Date | null) {
   }).format(date);
 }
 
+function formatDateTime(date: Date | null) {
+  if (!date) return '—';
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+}
+
 function PriorityBadge({ priority }: { priority: string | null }) {
   const p = priority?.toUpperCase() || 'LOW';
 
   const styles: Record<string, React.CSSProperties> = {
-    HOT: { background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' },
-    WARM: { background: '#ffedd5', color: '#9a3412', border: '1px solid #fdba74' },
-    LOW: { background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db' },
+    HOT: {
+      background: '#fee2e2',
+      color: '#991b1b',
+      border: '1px solid #fecaca',
+    },
+    WARM: {
+      background: '#ffedd5',
+      color: '#9a3412',
+      border: '1px solid #fdba74',
+    },
+    LOW: {
+      background: '#f3f4f6',
+      color: '#374151',
+      border: '1px solid #d1d5db',
+    },
   };
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: 0.3, ...(styles[p] || styles.LOW) }}>
+    <span style={{ ...badgeStyle, ...(styles[p] || styles.LOW) }}>
       {p}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: string | null }) {
+  return (
+    <span style={statusBadgeStyle}>
+      {status || 'NEW'}
     </span>
   );
 }
@@ -83,20 +120,23 @@ export default async function DashboardPage() {
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
           Arrestra Lead Dashboard
         </h1>
+
         <p style={{ color: '#6b7280' }}>
           View ingested arrest and bail-form leads from TOPICs and future sources.
         </p>
       </div>
 
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginBottom: 24 }}>
+      <section style={metricGridStyle}>
         <div style={cardStyle}>
           <p style={labelStyle}>Total Leads</p>
           <h2 style={metricStyle}>{totalLeads}</h2>
         </div>
+
         <div style={cardStyle}>
           <p style={labelStyle}>Hot Leads</p>
           <h2 style={metricStyle}>{hotLeads}</h2>
         </div>
+
         <div style={cardStyle}>
           <p style={labelStyle}>Warm Leads</p>
           <h2 style={metricStyle}>{warmLeads}</h2>
@@ -109,9 +149,9 @@ export default async function DashboardPage() {
         </h2>
 
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <table style={tableStyle}>
             <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+              <tr style={tableHeaderRowStyle}>
                 <th style={thStyle}>Priority</th>
                 <th style={thStyle}>Score</th>
                 <th style={thStyle}>Name</th>
@@ -131,15 +171,28 @@ export default async function DashboardPage() {
                   style={{
                     borderBottom: '1px solid #f3f4f6',
                     backgroundColor: lead.priority === 'HOT' ? '#fee2e2' : '#ffffff',
-                    boxShadow: lead.priority === 'HOT' ? 'inset 4px 0 0 #dc2626' : 'none',
+                    boxShadow:
+                      lead.priority === 'HOT' ? 'inset 4px 0 0 #dc2626' : 'none',
                   }}
                 >
-                  <td style={tdStyle}><PriorityBadge priority={lead.priority} /></td>
-                  <td style={tdStyle}><strong>{lead.score ?? 0}</strong></td>
                   <td style={tdStyle}>
-                    <strong>{[lead.firstName, lead.lastName].filter(Boolean).join(' ') || 'Unknown'}</strong>
+                    <PriorityBadge priority={lead.priority} />
                   </td>
-                  <td style={tdStyle}>{lead.status}</td>
+
+                  <td style={tdStyle}>
+                    <strong>{lead.score ?? 0}</strong>
+                  </td>
+
+                  <td style={tdStyle}>
+                    <strong>
+                      {[lead.firstName, lead.lastName].filter(Boolean).join(' ') ||
+                        'Unknown'}
+                    </strong>
+                  </td>
+
+                  <td style={tdStyle}>
+                    <StatusBadge status={lead.status} />
+                  </td>
 
                   <td style={tdStyle}>
                     <details>
@@ -151,34 +204,53 @@ export default async function DashboardPage() {
                             <div>
                               <p style={labelStyle}>Lead Details</p>
                               <h2 style={{ fontSize: 24, fontWeight: 800 }}>
-                                {[lead.firstName, lead.lastName].filter(Boolean).join(' ') || 'Unknown'}
+                                {[lead.firstName, lead.lastName]
+                                  .filter(Boolean)
+                                  .join(' ') || 'Unknown'}
                               </h2>
                             </div>
 
                             <div style={drawerHeaderActionsStyle}>
                               <PriorityBadge priority={lead.priority} />
-                              <a href="/dashboard" style={closeButtonStyle}>Close</a>
+                              <StatusBadge status={lead.status} />
+                              <a href="/dashboard" style={closeButtonStyle}>
+                                Close
+                              </a>
                             </div>
                           </div>
 
                           <div style={drawerSectionStyle}>
                             <h3 style={drawerSectionTitleStyle}>Case Snapshot</h3>
+
                             <div style={detailGridStyle}>
                               <div>
                                 <p style={detailLabelStyle}>Score</p>
                                 <p style={detailValueStyle}>{lead.score ?? 0}</p>
                               </div>
+
                               <div>
                                 <p style={detailLabelStyle}>County</p>
                                 <p style={detailValueStyle}>{lead.county || '—'}</p>
                               </div>
+
                               <div>
                                 <p style={detailLabelStyle}>Source</p>
                                 <p style={detailValueStyle}>{lead.source}</p>
                               </div>
+
                               <div>
                                 <p style={detailLabelStyle}>Status</p>
                                 <p style={detailValueStyle}>{lead.status}</p>
+                              </div>
+
+                              <div>
+                                <p style={detailLabelStyle}>Created</p>
+                                <p style={detailValueStyle}>{formatDateTime(lead.createdAt)}</p>
+                              </div>
+
+                              <div>
+                                <p style={detailLabelStyle}>Updated</p>
+                                <p style={detailValueStyle}>{formatDateTime(lead.updatedAt)}</p>
                               </div>
                             </div>
                           </div>
@@ -215,14 +287,7 @@ export default async function DashboardPage() {
                             ) : (
                               <div style={{ display: 'grid', gap: 12 }}>
                                 {lead.events.map((event) => (
-                                  <div
-                                    key={event.id}
-                                    style={{
-                                      borderLeft: '3px solid #2563eb',
-                                      paddingLeft: 12,
-                                      paddingBottom: 4,
-                                    }}
-                                  >
+                                  <div key={event.id} style={timelineItemStyle}>
                                     <p style={{ fontWeight: 700 }}>
                                       {event.type === 'STATUS_CHANGED'
                                         ? 'Status changed'
@@ -230,7 +295,7 @@ export default async function DashboardPage() {
                                     </p>
 
                                     <p style={{ color: '#6b7280', fontSize: 13, marginTop: 2 }}>
-                                      {formatDate(event.createdAt)}
+                                      {formatDateTime(event.createdAt)}
                                     </p>
 
                                     {event.type === 'STATUS_CHANGED' && event.metadata && (
@@ -252,12 +317,14 @@ export default async function DashboardPage() {
 
                           <div style={drawerSectionStyle}>
                             <h3 style={drawerSectionTitleStyle}>Compliance Guidance</h3>
+
                             <div style={complianceGridStyle}>
                               <div style={allowedCardStyle}>Direct Mail ✅</div>
                               <div style={blockedCardStyle}>Cold SMS ❌</div>
                               <div style={blockedCardStyle}>Cold Call ❌</div>
                               <div style={blockedCardStyle}>Cold Email ❌</div>
                             </div>
+
                             <p style={{ marginTop: 12, color: '#6b7280', fontSize: 13 }}>
                               Use this as product guidance only. Law firms should confirm local advertising and solicitation rules with counsel.
                             </p>
@@ -265,6 +332,7 @@ export default async function DashboardPage() {
 
                           <div style={drawerSectionStyle}>
                             <h3 style={drawerSectionTitleStyle}>Recommended Next Action</h3>
+
                             <p style={{ lineHeight: 1.6 }}>
                               {lead.priority === 'HOT'
                                 ? 'Prioritize this lead for immediate direct-mail outreach and attorney review.'
@@ -279,15 +347,22 @@ export default async function DashboardPage() {
                   </td>
 
                   <td style={tdStyle}>{lead.county || '—'}</td>
-                  <td style={{ ...tdStyle, maxWidth: 420 }}>{lead.charge || '—'}</td>
+
+                  <td style={{ ...tdStyle, maxWidth: 420 }}>
+                    {lead.charge || '—'}
+                  </td>
+
                   <td style={tdStyle}>{lead.source}</td>
+
                   <td style={tdStyle}>{formatDate(lead.createdAt)}</td>
                 </tr>
               ))}
 
               {leads.length === 0 && (
                 <tr>
-                  <td style={tdStyle} colSpan={9}>No leads found yet.</td>
+                  <td style={tdStyle} colSpan={9}>
+                    No leads found yet.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -297,6 +372,13 @@ export default async function DashboardPage() {
     </main>
   );
 }
+
+const metricGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: 16,
+  marginBottom: 24,
+};
 
 const cardStyle: React.CSSProperties = {
   background: '#ffffff',
@@ -317,6 +399,17 @@ const metricStyle: React.CSSProperties = {
   fontWeight: 800,
 };
 
+const tableStyle: React.CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  fontSize: 14,
+};
+
+const tableHeaderRowStyle: React.CSSProperties = {
+  textAlign: 'left',
+  borderBottom: '1px solid #e5e7eb',
+};
+
 const thStyle: React.CSSProperties = {
   padding: '12px 8px',
   color: '#6b7280',
@@ -326,6 +419,23 @@ const thStyle: React.CSSProperties = {
 const tdStyle: React.CSSProperties = {
   padding: '14px 8px',
   verticalAlign: 'top',
+};
+
+const badgeStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '4px 10px',
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: 0.3,
+};
+
+const statusBadgeStyle: React.CSSProperties = {
+  ...badgeStyle,
+  background: '#eef2ff',
+  color: '#3730a3',
+  border: '1px solid #c7d2fe',
 };
 
 const viewButtonStyle: React.CSSProperties = {
@@ -369,6 +479,7 @@ const drawerHeaderActionsStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 10,
+  flexWrap: 'wrap',
 };
 
 const closeButtonStyle: React.CSSProperties = {
@@ -409,6 +520,12 @@ const detailLabelStyle: React.CSSProperties = {
 
 const detailValueStyle: React.CSSProperties = {
   fontWeight: 700,
+};
+
+const timelineItemStyle: React.CSSProperties = {
+  borderLeft: '3px solid #2563eb',
+  paddingLeft: 12,
+  paddingBottom: 4,
 };
 
 const complianceGridStyle: React.CSSProperties = {
