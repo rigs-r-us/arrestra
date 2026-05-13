@@ -226,3 +226,28 @@ main > section,
 [data-nextjs-scroll-focus-boundary] {
   background: transparent !important;
 }
+
+/* Dashboard dark table/card override */
+main section,
+main table,
+main thead,
+main tbody,
+main tr,
+main td,
+main th {
+  background-color: #0F172A !important;
+  color: #E5E7EB !important;
+  border-color: #1a2641 !important;
+}
+
+main section {
+  border: 1px solid #1a2641 !important;
+}
+
+main th {
+  color: #9CA3AF !important;
+}
+
+main tr[style*="rgba"] {
+  background-color: rgba(229, 57, 53, 0.14) !important;
+}

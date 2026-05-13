@@ -121,7 +121,7 @@ export default async function DashboardPage() {
           Arrestra Lead Dashboard
         </h1>
 
-        <p style={{ color: '#6b7280' }}>
+        <p style={{ color: '#9CA3AF' }}>
           View ingested arrest and bail-form leads from TOPICs and future sources.
         </p>
       </div>
@@ -169,8 +169,8 @@ export default async function DashboardPage() {
                 <tr
                   key={lead.id}
                   style={{
-                    borderBottom: '1px solid #f3f4f6',
-                    backgroundColor: lead.priority === 'HOT' ? '#fee2e2' : '#ffffff',
+                    borderBottom: '1px solid #1a2641',
+                    backgroundColor: lead.priority === 'HOT' ? 'rgba(229, 57, 53, 0.14)' : '#0F172A',
                     boxShadow:
                       lead.priority === 'HOT' ? 'inset 4px 0 0 #dc2626' : 'none',
                   }}
@@ -281,7 +281,7 @@ export default async function DashboardPage() {
                             <h3 style={drawerSectionTitleStyle}>Activity Timeline</h3>
 
                             {lead.events.length === 0 ? (
-                              <p style={{ color: '#6b7280', fontSize: 14 }}>
+                              <p style={{ color: '#9CA3AF', fontSize: 14 }}>
                                 No activity yet.
                               </p>
                             ) : (
@@ -294,7 +294,7 @@ export default async function DashboardPage() {
                                         : event.type}
                                     </p>
 
-                                    <p style={{ color: '#6b7280', fontSize: 13, marginTop: 2 }}>
+                                    <p style={{ color: '#9CA3AF', fontSize: 13, marginTop: 2 }}>
                                       {formatDateTime(event.createdAt)}
                                     </p>
 
@@ -325,7 +325,7 @@ export default async function DashboardPage() {
                               <div style={blockedCardStyle}>Cold Email ❌</div>
                             </div>
 
-                            <p style={{ marginTop: 12, color: '#6b7280', fontSize: 13 }}>
+                            <p style={{ marginTop: 12, color: '#9CA3AF', fontSize: 13 }}>
                               Use this as product guidance only. Law firms should confirm local advertising and solicitation rules with counsel.
                             </p>
                           </div>
@@ -381,15 +381,15 @@ const metricGridStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #e5e7eb',
+  background: '#0F172A',
+  border: '1px solid #1a2641',
   borderRadius: 16,
   padding: 20,
   boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
 };
 
 const labelStyle: React.CSSProperties = {
-  color: '#6b7280',
+  color: '#9CA3AF',
   fontSize: 14,
   marginBottom: 8,
 };
@@ -407,12 +407,12 @@ const tableStyle: React.CSSProperties = {
 
 const tableHeaderRowStyle: React.CSSProperties = {
   textAlign: 'left',
-  borderBottom: '1px solid #e5e7eb',
+  borderBottom: '1px solid #1a2641',
 };
 
 const thStyle: React.CSSProperties = {
   padding: '12px 8px',
-  color: '#6b7280',
+  color: '#9CA3AF',
   fontWeight: 700,
 };
 
@@ -440,7 +440,7 @@ const statusBadgeStyle: React.CSSProperties = {
 
 const viewButtonStyle: React.CSSProperties = {
   cursor: 'pointer',
-  color: '#2563eb',
+  color: '#ff7a7a',
   fontWeight: 700,
   listStyle: 'none',
 };
@@ -459,7 +459,7 @@ const drawerStyle: React.CSSProperties = {
   height: '100vh',
   width: 'min(520px, 100vw)',
   overflowY: 'auto',
-  background: '#ffffff',
+  background: '#0F172A',
   borderLeft: '1px solid #e5e7eb',
   padding: 24,
   boxShadow: '-12px 0 32px rgba(0,0,0,0.12)',
@@ -470,7 +470,7 @@ const drawerHeaderStyle: React.CSSProperties = {
   justifyContent: 'space-between',
   gap: 16,
   alignItems: 'flex-start',
-  borderBottom: '1px solid #e5e7eb',
+  borderBottom: '1px solid #1a2641',
   paddingBottom: 16,
   marginBottom: 20,
 };
@@ -490,11 +490,11 @@ const closeButtonStyle: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 700,
   textDecoration: 'none',
-  background: '#ffffff',
+  background: '#0F172A',
 };
 
 const drawerSectionStyle: React.CSSProperties = {
-  border: '1px solid #e5e7eb',
+  border: '1px solid #1a2641',
   borderRadius: 14,
   padding: 16,
   marginBottom: 16,
@@ -513,7 +513,7 @@ const detailGridStyle: React.CSSProperties = {
 };
 
 const detailLabelStyle: React.CSSProperties = {
-  color: '#6b7280',
+  color: '#9CA3AF',
   fontSize: 12,
   marginBottom: 4,
 };

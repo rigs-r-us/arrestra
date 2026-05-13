@@ -36,10 +36,7 @@ export default function AppLayout({
               <div className="text-sm font-semibold tracking-wide text-white">
                 Arrestra
               </div>
-
-              <div className="text-xs text-slate-400">
-                Firm Dashboard
-              </div>
+              <div className="text-xs text-slate-400">Firm Dashboard</div>
             </div>
           </div>
 
@@ -52,10 +49,7 @@ export default function AppLayout({
               <Link href="/dashboard">Dashboard</Link>
             </Button>
 
-            <Separator
-              orientation="vertical"
-              className="mx-2 h-6 bg-slate-700"
-            />
+            <Separator orientation="vertical" className="mx-2 h-6 bg-slate-700" />
 
             <Button
               asChild
@@ -67,9 +61,7 @@ export default function AppLayout({
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        {children}
-      </main>
+      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
     </div>
   );
 }
