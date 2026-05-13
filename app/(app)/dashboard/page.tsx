@@ -1,6 +1,23 @@
+import { revalidatePath } from 'next/cache';
 import { prisma } from '../../../src/lib/db';
 
 export const dynamic = 'force-dynamic';
+
+async function updateLeadStatus(formData: FormData) {
+  'use server';
+
+  const leadId = String(formData.get('leadId') || '');
+  const status = String(formData.get('status') || 'NEW');
+
+  if (!leadId) return;
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { status: status as any },
+  });
+
+  revalidatePath('/dashboard');
+}
 
 function formatDate(date: Date | null) {
   if (!date) return '—';
@@ -16,36 +33,13 @@ function PriorityBadge({ priority }: { priority: string | null }) {
   const p = priority?.toUpperCase() || 'LOW';
 
   const styles: Record<string, React.CSSProperties> = {
-    HOT: {
-      background: '#fee2e2',
-      color: '#991b1b',
-      border: '1px solid #fecaca',
-    },
-    WARM: {
-      background: '#ffedd5',
-      color: '#9a3412',
-      border: '1px solid #fdba74',
-    },
-    LOW: {
-      background: '#f3f4f6',
-      color: '#374151',
-      border: '1px solid #d1d5db',
-    },
+    HOT: { background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' },
+    WARM: { background: '#ffedd5', color: '#9a3412', border: '1px solid #fdba74' },
+    LOW: { background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db' },
   };
 
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: '4px 10px',
-        borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 700,
-        letterSpacing: 0.3,
-        ...(styles[p] || styles.LOW),
-      }}
-    >
+    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: 0.3, ...(styles[p] || styles.LOW) }}>
       {p}
     </span>
   );
@@ -53,9 +47,7 @@ function PriorityBadge({ priority }: { priority: string | null }) {
 
 export default async function DashboardPage() {
   const leads = await prisma.lead.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
+    orderBy: { createdAt: 'desc' },
     take: 100,
   });
 
@@ -69,31 +61,20 @@ export default async function DashboardPage() {
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
           Arrestra Lead Dashboard
         </h1>
-
         <p style={{ color: '#6b7280' }}>
-          View ingested arrest and bail-form leads from TOPICs and future
-          sources.
+          View ingested arrest and bail-form leads from TOPICs and future sources.
         </p>
       </div>
 
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          gap: 16,
-          marginBottom: 24,
-        }}
-      >
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, marginBottom: 24 }}>
         <div style={cardStyle}>
           <p style={labelStyle}>Total Leads</p>
           <h2 style={metricStyle}>{totalLeads}</h2>
         </div>
-
         <div style={cardStyle}>
           <p style={labelStyle}>Hot Leads</p>
           <h2 style={metricStyle}>{hotLeads}</h2>
         </div>
-
         <div style={cardStyle}>
           <p style={labelStyle}>Warm Leads</p>
           <h2 style={metricStyle}>{warmLeads}</h2>
@@ -106,23 +87,13 @@ export default async function DashboardPage() {
         </h2>
 
         <div style={{ overflowX: 'auto' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: 14,
-            }}
-          >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
-              <tr
-                style={{
-                  textAlign: 'left',
-                  borderBottom: '1px solid #e5e7eb',
-                }}
-              >
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
                 <th style={thStyle}>Priority</th>
                 <th style={thStyle}>Score</th>
                 <th style={thStyle}>Name</th>
+                <th style={thStyle}>Status</th>
                 <th style={thStyle}>Action</th>
                 <th style={thStyle}>County</th>
                 <th style={thStyle}>Charge</th>
@@ -137,24 +108,16 @@ export default async function DashboardPage() {
                   key={lead.id}
                   style={{
                     borderBottom: '1px solid #f3f4f6',
-                    background: lead.priority === 'HOT' ? '#fef2f2' : 'transparent',
+                    backgroundColor: lead.priority === 'HOT' ? '#fee2e2' : '#ffffff',
+                    boxShadow: lead.priority === 'HOT' ? 'inset 4px 0 0 #dc2626' : 'none',
                   }}
                 >
+                  <td style={tdStyle}><PriorityBadge priority={lead.priority} /></td>
+                  <td style={tdStyle}><strong>{lead.score ?? 0}</strong></td>
                   <td style={tdStyle}>
-                    <PriorityBadge priority={lead.priority} />
+                    <strong>{[lead.firstName, lead.lastName].filter(Boolean).join(' ') || 'Unknown'}</strong>
                   </td>
-
-                  <td style={tdStyle}>
-                    <strong>{lead.score ?? 0}</strong>
-                  </td>
-
-                  <td style={tdStyle}>
-                    <strong>
-                      {[lead.firstName, lead.lastName]
-                        .filter(Boolean)
-                        .join(' ') || 'Unknown'}
-                    </strong>
-                  </td>
+                  <td style={tdStyle}>{lead.status}</td>
 
                   <td style={tdStyle}>
                     <details>
@@ -166,13 +129,14 @@ export default async function DashboardPage() {
                             <div>
                               <p style={labelStyle}>Lead Details</p>
                               <h2 style={{ fontSize: 24, fontWeight: 800 }}>
-                                {[lead.firstName, lead.lastName]
-                                  .filter(Boolean)
-                                  .join(' ') || 'Unknown'}
+                                {[lead.firstName, lead.lastName].filter(Boolean).join(' ') || 'Unknown'}
                               </h2>
                             </div>
 
-                            <PriorityBadge priority={lead.priority} />
+                            <div style={drawerHeaderActionsStyle}>
+                              <PriorityBadge priority={lead.priority} />
+                              <a href="/dashboard" style={closeButtonStyle}>Close</a>
+                            </div>
                           </div>
 
                           <div style={drawerSectionStyle}>
@@ -191,10 +155,31 @@ export default async function DashboardPage() {
                                 <p style={detailValueStyle}>{lead.source}</p>
                               </div>
                               <div>
-                                <p style={detailLabelStyle}>Created</p>
-                                <p style={detailValueStyle}>{formatDate(lead.createdAt)}</p>
+                                <p style={detailLabelStyle}>Status</p>
+                                <p style={detailValueStyle}>{lead.status}</p>
                               </div>
                             </div>
+                          </div>
+
+                          <div style={drawerSectionStyle}>
+                            <h3 style={drawerSectionTitleStyle}>Lead Workflow</h3>
+
+                            <form action={updateLeadStatus} style={{ display: 'grid', gap: 12 }}>
+                              <input type="hidden" name="leadId" value={lead.id} />
+
+                              <select name="status" defaultValue={lead.status} style={inputStyle}>
+                                <option value="NEW">NEW</option>
+                                <option value="QUALIFIED">QUALIFIED</option>
+                                <option value="CONTACTED">CONTACTED</option>
+                                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                                <option value="CLOSED_WON">CLOSED_WON</option>
+                                <option value="CLOSED_LOST">CLOSED_LOST</option>
+                              </select>
+
+                              <button type="submit" style={buttonStyle}>
+                                Save Status
+                              </button>
+                            </form>
                           </div>
 
                           <div style={drawerSectionStyle}>
@@ -231,29 +216,15 @@ export default async function DashboardPage() {
                   </td>
 
                   <td style={tdStyle}>{lead.county || '—'}</td>
-
-                  <td
-                    style={{
-                      ...tdStyle,
-                      maxWidth: 420,
-                    }}
-                  >
-                    {lead.charge || '—'}
-                  </td>
-
+                  <td style={{ ...tdStyle, maxWidth: 420 }}>{lead.charge || '—'}</td>
                   <td style={tdStyle}>{lead.source}</td>
-
-                  <td style={tdStyle}>
-                    {formatDate(lead.createdAt)}
-                  </td>
+                  <td style={tdStyle}>{formatDate(lead.createdAt)}</td>
                 </tr>
               ))}
 
               {leads.length === 0 && (
                 <tr>
-                  <td style={tdStyle} colSpan={8}>
-                    No leads found yet.
-                  </td>
+                  <td style={tdStyle} colSpan={9}>No leads found yet.</td>
                 </tr>
               )}
             </tbody>
@@ -331,6 +302,23 @@ const drawerHeaderStyle: React.CSSProperties = {
   marginBottom: 20,
 };
 
+const drawerHeaderActionsStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+};
+
+const closeButtonStyle: React.CSSProperties = {
+  border: '1px solid #d1d5db',
+  borderRadius: 999,
+  padding: '6px 12px',
+  color: '#374151',
+  fontSize: 13,
+  fontWeight: 700,
+  textDecoration: 'none',
+  background: '#ffffff',
+};
+
 const drawerSectionStyle: React.CSSProperties = {
   border: '1px solid #e5e7eb',
   borderRadius: 14,
@@ -382,4 +370,21 @@ const blockedCardStyle: React.CSSProperties = {
   borderRadius: 10,
   padding: 10,
   fontWeight: 700,
+};
+
+const inputStyle: React.CSSProperties = {
+  border: '1px solid #d1d5db',
+  borderRadius: 10,
+  padding: '10px 12px',
+  fontSize: 14,
+};
+
+const buttonStyle: React.CSSProperties = {
+  border: '1px solid #111827',
+  borderRadius: 10,
+  padding: '10px 16px',
+  background: '#111827',
+  color: '#ffffff',
+  fontWeight: 700,
+  cursor: 'pointer',
 };
