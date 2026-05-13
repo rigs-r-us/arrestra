@@ -65,9 +65,14 @@ model Lead {
   tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   source     String
+  fingerprint String?
+  sourceId    String?
+  sourceUrl   String?
+  rawData     Json?
 
   firstName  String?
   lastName   String?
+  fullName   String?
 
   phone      String?
   email      String?
@@ -75,14 +80,26 @@ model Lead {
   county     String?
   caseNumber String?
   arrestDate DateTime?
+  bookingDate    DateTime?
+  chargeSeverity String?
+  disposition    String?
+  courtName      String?
+  jailName       String?
+  address        String?
+  city           String?
+  state          String?
+  zip            String?
 
   charge     String?
   bondAmount Int?
+  bondType      String?
+  custodyStatus String?
   notes      String?
 
   // Lead scoring
   score      Int        @default(0)
   priority   String     @default("LOW")
+  lastScoredAt DateTime?
 
   status     LeadStatus @default(NEW)
 
@@ -91,6 +108,8 @@ model Lead {
 
   enrichments Enrichment[]
   events      LeadEvent[]
+
+  @@unique([tenantId, source, fingerprint], name: "tenantId_source_fingerprint")
 }
 
 model Enrichment {
