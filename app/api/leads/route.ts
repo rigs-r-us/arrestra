@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { prisma } from '../../../../src/lib/db';
-
-function csvEscape(value: unknown) {
-  const str = String(value ?? '');
-  return `"${str.replace(/"/g, '""')}"`;
-}
+import { prisma } from '../../../src/lib/db';
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -27,58 +22,14 @@ export async function GET(req: NextRequest) {
   }
 
   const url = new URL(req.url);
-  const status = url.searchParams.get('status');
-  const priority = url.searchParams.get('priority');
-  const limit = Math.min(
-    Number(url.searchParams.get('limit') || '500') || 500,
-    1000,
-  );
+  const limitParam = url.searchParams.get('limit');
+  const limit = Math.min(Number(limitParam || '50') || 50, 200);
 
   const leads = await prisma.lead.findMany({
-    where: {
-      tenantId: dbUser.tenantId,
-      ...(status ? { status: status as any } : {}),
-      ...(priority ? { priority } : {}),
-    },
+    where: { tenantId: dbUser.tenantId },
     orderBy: { createdAt: 'desc' },
     take: limit,
   });
 
-  const headers = [
-    'First Name',
-    'Last Name',
-    'County',
-    'Charge',
-    'Priority',
-    'Score',
-    'Status',
-    'Source',
-    'Created At',
-  ];
-
-  const rows = leads.map((lead) => [
-    lead.firstName,
-    lead.lastName,
-    lead.county,
-    lead.charge,
-    lead.priority,
-    lead.score,
-    lead.status,
-    lead.source,
-    lead.createdAt.toISOString(),
-  ]);
-
-  const csv = [
-    headers.map(csvEscape).join(','),
-    ...rows.map((row) => row.map(csvEscape).join(',')),
-  ].join('\n');
-
-  return new NextResponse(csv, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition':
-        'attachment; filename="arrestra-direct-mail-export.csv"',
-    },
-  });
+  return NextResponse.json({ leads });
 }
