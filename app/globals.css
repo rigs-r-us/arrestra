@@ -76,3 +76,153 @@ main, header {
   position: relative;
   z-index: 1;
 }
+
+/* Arrestra app theme */
+:root {
+  --arrestra-bg: #0A0F1D;
+  --arrestra-primary: #E53935;
+  --arrestra-accent: #0F172A;
+  --arrestra-text: #E5E7EB;
+  --arrestra-muted: #9CA3AF;
+}
+
+html,
+body {
+  background: var(--arrestra-bg) !important;
+  color: var(--arrestra-text) !important;
+}
+
+header,
+nav {
+  background: rgba(7, 11, 22, 0.92) !important;
+  border-bottom: 1px solid #10182a !important;
+  color: var(--arrestra-text) !important;
+}
+
+header *,
+nav * {
+  color: var(--arrestra-text) !important;
+}
+
+main {
+  background:
+    radial-gradient(1200px 420px at 50% -120px, rgba(229,57,53,.18), transparent 60%),
+    var(--arrestra-bg) !important;
+}
+
+a {
+  color: #ff7a7a;
+}
+
+a:hover {
+  color: var(--arrestra-primary);
+}
+
+/* Arrestra full-app dark theme override */
+html,
+body,
+#__next,
+body > div {
+  background: #0A0F1D !important;
+  color: #E5E7EB !important;
+  min-height: 100vh;
+}
+
+body {
+  background:
+    radial-gradient(1200px 420px at 50% -120px, rgba(229,57,53,.18), transparent 60%),
+    #0A0F1D !important;
+}
+
+/* Top app nav/header */
+header,
+nav,
+header > *,
+nav > *,
+body > div > div:first-child {
+  background: rgba(7, 11, 22, 0.92) !important;
+  color: #E5E7EB !important;
+  border-color: #10182a !important;
+}
+
+/* Header text/buttons */
+header *,
+nav *,
+body > div > div:first-child * {
+  color: #E5E7EB !important;
+}
+
+/* Buttons in header */
+button {
+  border-color: #29334f;
+}
+
+/* Main content */
+main {
+  background:
+    radial-gradient(1200px 420px at 50% -120px, rgba(229,57,53,.18), transparent 60%),
+    #0A0F1D !important;
+}
+
+/* Remove white page gutters */
+main,
+section,
+div {
+  border-color: #1a2641;
+}
+
+/* Arrestra full app shell theme */
+html,
+body {
+  margin: 0 !important;
+  min-height: 100vh !important;
+  background: #0A0F1D !important;
+  color: #E5E7EB !important;
+}
+
+body > div,
+body > div > div,
+body > div > main {
+  background: #0A0F1D !important;
+}
+
+/* Top navigation shell */
+header,
+nav,
+body > div > div:first-child {
+  background: rgba(7, 11, 22, 0.92) !important;
+  color: #E5E7EB !important;
+  border-bottom: 1px solid #10182a !important;
+}
+
+/* Header text */
+header *,
+nav *,
+body > div > div:first-child * {
+  color: #E5E7EB !important;
+}
+
+/* Header sign-out button */
+header button,
+nav button,
+body > div > div:first-child button {
+  background: #0b1428 !important;
+  color: #E5E7EB !important;
+  border: 1px solid #29334f !important;
+  box-shadow: none !important;
+}
+
+/* Dashboard page full-width background */
+main {
+  min-height: calc(100vh - 64px) !important;
+  background:
+    radial-gradient(1200px 420px at 50% -120px, rgba(229,57,53,.18), transparent 60%),
+    #0A0F1D !important;
+}
+
+/* Remove white gutters caused by centered wrappers */
+main > div,
+main > section,
+[data-nextjs-scroll-focus-boundary] {
+  background: transparent !important;
+}

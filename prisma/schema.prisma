@@ -51,11 +51,12 @@ model User {
 
 enum LeadStatus {
   NEW
+  MAILED
   QUALIFIED
-  CONTACTED
-  IN_PROGRESS
+  RETAINED
   CLOSED_WON
   CLOSED_LOST
+  DISMISSED
 }
 
 model Lead {
@@ -97,7 +98,8 @@ model Enrichment {
   leadId    String
   lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   provider  String
-  score     Int?
+  score     Int      @default(0)
+  priority  String   @default("LOW")
   data      Json
   createdAt DateTime @default(now())
 }
