@@ -213,9 +213,15 @@ export default async function DashboardPage() {
                             <div style={drawerHeaderActionsStyle}>
                               <PriorityBadge priority={lead.priority} />
                               <StatusBadge status={lead.status} />
-                              <a href="/dashboard" style={closeButtonStyle}>
-                                Close
-                              </a>
+                              <button
+                                onClick={() => {
+                                  const details = document.querySelector('details[open]');
+                                  if (details) (details as HTMLDetailsElement).open = false;
+                                }}
+                                style={closeIconButtonStyle}
+                              >
+                                ✕
+                              </button>
                             </div>
                           </div>
 
@@ -493,6 +499,25 @@ const closeButtonStyle: React.CSSProperties = {
   background: '#0F172A',
 };
 
+const closeIconButtonStyle: React.CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  color: '#9CA3AF',
+  fontSize: 20,
+  fontWeight: 700,
+  cursor: 'pointer',
+  padding: '4px 8px',
+  borderRadius: 6,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'all 0.2s',
+  '&:hover': {
+    background: '#1a2641',
+    color: '#ffffff',
+  },
+};
+
 const drawerSectionStyle: React.CSSProperties = {
   border: '1px solid #1a2641',
   borderRadius: 14,
@@ -553,10 +578,12 @@ const blockedCardStyle: React.CSSProperties = {
 };
 
 const inputStyle: React.CSSProperties = {
-  border: '1px solid #d1d5db',
+  border: '1px solid #1a2641',
   borderRadius: 10,
   padding: '10px 12px',
   fontSize: 14,
+  background: '#1a2641',
+  color: '#ffffff',
 };
 
 const buttonStyle: React.CSSProperties = {
