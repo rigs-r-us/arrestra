@@ -1,10 +1,18 @@
-// middleware.ts (temporary minimal version to unblock build)
+import { auth } from "@/lib/auth";
 
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+export default auth((req) => {
+  // Protect dashboard and app routes
+  if (!req.auth && req.nextUrl.pathname.startsWith("/dashboard")) {
+    const loginUrl = new URL("/login", req.nextUrl.origin);
+    return Response.redirect(loginUrl);
+  }
 
-export function middleware(req: NextRequest) {
-  // For now, just pass the request through.
-  // We can reintroduce tenant-aware routing here later.
-  return NextResponse.next();
-}
+  if (!req.auth && req.nextUrl.pathname.startsWith("/app")) {
+    const loginUrl = new URL("/login", req.nextUrl.origin);
+    return Response.redirect(loginUrl);
+  }
+});
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
