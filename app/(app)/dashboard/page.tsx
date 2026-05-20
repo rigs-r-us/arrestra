@@ -1,5 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '../../../src/lib/db';
+import { CloseButton } from './CloseButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -213,15 +214,7 @@ export default async function DashboardPage() {
                             <div style={drawerHeaderActionsStyle}>
                               <PriorityBadge priority={lead.priority} />
                               <StatusBadge status={lead.status} />
-                              <button
-                                onClick={() => {
-                                  const details = document.querySelector('details[open]');
-                                  if (details) (details as HTMLDetailsElement).open = false;
-                                }}
-                                style={closeIconButtonStyle}
-                              >
-                                ✕
-                              </button>
+                              <CloseButton />
                             </div>
                           </div>
 
@@ -499,19 +492,6 @@ const closeButtonStyle: React.CSSProperties = {
   background: '#0F172A',
 };
 
-const closeIconButtonStyle: React.CSSProperties = {
-  background: 'transparent',
-  border: 'none',
-  color: '#9CA3AF',
-  fontSize: 20,
-  fontWeight: 700,
-  cursor: 'pointer',
-  padding: '4px 8px',
-  borderRadius: 6,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
 
 const drawerSectionStyle: React.CSSProperties = {
   border: '1px solid #1a2641',
