@@ -511,11 +511,6 @@ const closeIconButtonStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  transition: 'all 0.2s',
-  '&:hover': {
-    background: '#1a2641',
-    color: '#ffffff',
-  },
 };
 
 const drawerSectionStyle: React.CSSProperties = {
