@@ -4,6 +4,13 @@ frontend:
     preBuild:
       commands:
         - npm ci || npm install
+        - echo "DATABASE_URL=$DATABASE_URL" >> .env.production
+        - echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.production
+        - echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.production
+        - echo "AUTH_SECRET=$AUTH_SECRET" >> .env.production
+        - echo "AUTH_URL=$AUTH_URL" >> .env.production
+        - echo "DATABASE_URL written? $(test -n "$DATABASE_URL" && echo yes || echo no)"
+        - cat .env.production | sed 's/=.*/=***MASKED***/'
         - npx prisma generate
     build:
       commands:
@@ -15,3 +22,4 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
+      - .next/cache/**/*
