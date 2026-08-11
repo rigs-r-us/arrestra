@@ -4,18 +4,14 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 
-const secret =
-  process.env.AUTH_SECRET ??
-  process.env.NEXTAUTH_SECRET ??
-  process.env.AUTHJS_SECRET ??
-  "dev-placeholder-secret-for-build"; // prevents build-time crash
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret,
   trustHost: true,
   basePath: "/api/auth",
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  pages: {
+    signIn: "/login",
+  },
   providers: [
     Credentials({
       name: "Credentials",
@@ -39,4 +35,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
 });

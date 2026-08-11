@@ -1,11 +1,28 @@
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { auth } from '../../../src/lib/auth';
 import { prisma } from '../../../src/lib/db';
 import { CloseButton } from './CloseButton';
 
 export const dynamic = 'force-dynamic';
 
+async function getCurrentTenantId() {
+  const session = await auth();
+  if (!session?.user?.email) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { tenantId: true },
+  });
+
+  return user?.tenantId ?? null;
+}
+
 async function updateLeadStatus(formData: FormData) {
   'use server';
+
+  const tenantId = await getCurrentTenantId();
+  if (!tenantId) return;
 
   const leadId = String(formData.get('leadId') || '');
   const status = String(formData.get('status') || 'NEW');
@@ -13,17 +30,19 @@ async function updateLeadStatus(formData: FormData) {
   if (!leadId) return;
 
   const existingLead = await prisma.lead.findUnique({
-    where: { id: leadId },
+    where: { id: leadId, tenantId },
     select: { status: true },
   });
 
-  if (existingLead?.status === status) {
+  if (!existingLead) return;
+
+  if (existingLead.status === status) {
     revalidatePath('/dashboard');
     return;
   }
 
   await prisma.lead.update({
-    where: { id: leadId },
+    where: { id: leadId, tenantId },
     data: { status: status as any },
   });
 
@@ -32,7 +51,7 @@ async function updateLeadStatus(formData: FormData) {
       leadId,
       type: 'STATUS_CHANGED',
       metadata: {
-        from: existingLead?.status ?? null,
+        from: existingLead.status ?? null,
         to: status,
       },
     },
@@ -100,7 +119,13 @@ function StatusBadge({ status }: { status: string | null }) {
 }
 
 export default async function DashboardPage() {
+  const tenantId = await getCurrentTenantId();
+  if (!tenantId) {
+    redirect('/login');
+  }
+
   const leads = await prisma.lead.findMany({
+    where: { tenantId },
     orderBy: { createdAt: 'desc' },
     take: 100,
     include: {
