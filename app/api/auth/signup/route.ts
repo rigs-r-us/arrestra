@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import { hash } from "bcryptjs";
+import { randomBytes } from "crypto";
 import { z } from "zod";
 
 const signupSchema = z.object({
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
           create: {
             name: tenantName,
             slug: tenantName.toLowerCase().replace(/\s+/g, "-"),
-            apiKey: `key_${Math.random().toString(36).substring(2, 15)}`,
+            apiKey: `key_${randomBytes(24).toString("hex")}`,
           },
         },
       },
