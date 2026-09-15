@@ -35,6 +35,10 @@ export async function POST(request: Request) {
         email,
         name,
         hashedPassword,
+        // Whoever creates a new firm's account is that firm's first admin —
+        // otherwise no one on a self-signup tenant could ever reach
+        // /settings to manage their own team.
+        role: "ADMIN",
         tenant: {
           create: {
             name: tenantName,
