@@ -18,6 +18,7 @@ model Tenant {
   domains Domain[]
   users   User[]
   leads   Lead[]
+  outreachEvents OutreachEvent[]
 }
 
 model Domain {
@@ -47,11 +48,16 @@ model User {
   accounts   Account[]
   sessions   Session[]
   leadEvents LeadEvent[]
+  outreachEvents OutreachEvent[]
 }
 
 enum LeadStatus {
   NEW
+  REVIEWED
+  MAIL_QUEUED
   MAILED
+  CLIENT_RESPONDED
+  CONTACT_PERMITTED
   QUALIFIED
   RETAINED
   CLOSED_WON
@@ -103,11 +109,19 @@ model Lead {
 
   status     LeadStatus @default(NEW)
 
+  // Compliance: outreach beyond direct mail is gated on these.
+  // See src/lib/compliance.ts for the enforcement point.
+  clientResponded    Boolean   @default(false)
+  clientRespondedAt  DateTime?
+  contactPermitted   Boolean   @default(false)
+  contactPermittedAt DateTime?
+
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
-  enrichments Enrichment[]
-  events      LeadEvent[]
+  enrichments    Enrichment[]
+  events         LeadEvent[]
+  outreachEvents OutreachEvent[]
 
   @@unique([tenantId, source, fingerprint], name: "tenantId_source_fingerprint")
 }
@@ -132,6 +146,46 @@ model LeadEvent {
   type      String
   metadata  Json?
   createdAt DateTime @default(now())
+}
+
+// Per-channel outreach record. DIRECT_MAIL is the only channel a lead can
+// receive before contactPermitted is true — see src/lib/compliance.ts,
+// which every code path creating an EMAIL/PHONE/SMS event must call first.
+enum OutreachChannel {
+  DIRECT_MAIL
+  EMAIL
+  PHONE
+  SMS
+  INTERNAL_NOTE
+}
+
+enum OutreachStatus {
+  NOT_STARTED
+  QUEUED
+  SENT
+  DELIVERED
+  RESPONDED
+  FAILED
+}
+
+model OutreachEvent {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId   String
+  lead     Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId   String?
+  user     User?  @relation(fields: [userId], references: [id])
+
+  channel     OutreachChannel
+  status      OutreachStatus  @default(NOT_STARTED)
+  templateId  String?
+  notes       String?
+  sentAt      DateTime?
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // NextAuth models
