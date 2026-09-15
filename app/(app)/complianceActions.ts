@@ -1,30 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Prisma } from '@prisma/client';
-import { auth } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/session';
 import { prisma } from '@/lib/db';
 import { createOutreachEvent } from '@/lib/compliance';
+import { logLeadEvent, markLeadMailSent } from '@/lib/leadMutations';
 
-async function getCurrentUser() {
-  const session = await auth();
-  if (!session?.user?.email) return null;
-
-  return prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true, tenantId: true },
-  });
-}
-
-async function logLeadEvent(
-  leadId: string,
-  userId: string | null,
-  type: string,
-  metadata?: Prisma.InputJsonValue
-) {
-  await prisma.leadEvent.create({
-    data: { leadId, userId: userId ?? undefined, type, metadata },
-  });
+function revalidateLeadPaths(leadId: string) {
+  revalidatePath('/dashboard');
+  revalidatePath('/mail-queue');
+  revalidatePath('/campaigns');
+  revalidatePath(`/leads/${leadId}`);
 }
 
 /** NEW / REVIEWED -> MAIL_QUEUED. Queues the lead for direct-mail outreach. */
@@ -60,7 +46,7 @@ export async function queueForMail(formData: FormData) {
     to: 'MAIL_QUEUED',
   });
 
-  revalidatePath('/dashboard');
+  revalidateLeadPaths(leadId);
 }
 
 /** MAIL_QUEUED -> MAILED. Marks the queued mail piece as sent today. */
@@ -71,51 +57,11 @@ export async function markMailSent(formData: FormData) {
   const leadId = String(formData.get('leadId') || '');
   if (!leadId) return;
 
-  const lead = await prisma.lead.findUnique({
-    where: { id: leadId, tenantId: user.tenantId },
-    include: {
-      outreachEvents: {
-        where: { channel: 'DIRECT_MAIL', status: 'QUEUED' },
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-      },
-    },
-  });
-  if (!lead || lead.status !== 'MAIL_QUEUED') return;
-
-  const now = new Date();
-  const queuedEvent = lead.outreachEvents[0];
-
   await prisma.$transaction(async (tx) => {
-    await tx.lead.update({
-      where: { id: leadId, tenantId: user.tenantId },
-      data: { status: 'MAILED' },
-    });
-
-    if (queuedEvent) {
-      await tx.outreachEvent.update({
-        where: { id: queuedEvent.id },
-        data: { status: 'SENT', sentAt: now },
-      });
-    } else {
-      // Shouldn't normally happen (queueForMail always creates one), but
-      // don't block marking mail sent over a missing prior event record.
-      await createOutreachEvent(tx as typeof prisma, lead, {
-        tenantId: user.tenantId,
-        userId: user.id,
-        channel: 'DIRECT_MAIL',
-        status: 'SENT',
-        sentAt: now,
-      });
-    }
+    await markLeadMailSent(tx, user.tenantId, user.id, leadId);
   });
 
-  await logLeadEvent(leadId, user.id, 'STATUS_CHANGED', {
-    from: 'MAIL_QUEUED',
-    to: 'MAILED',
-  });
-
-  revalidatePath('/dashboard');
+  revalidateLeadPaths(leadId);
 }
 
 /**
@@ -161,7 +107,7 @@ export async function recordClientResponse(formData: FormData) {
 
   await logLeadEvent(leadId, user.id, 'CLIENT_RESPONDED', notes ? { notes } : undefined);
 
-  revalidatePath('/dashboard');
+  revalidateLeadPaths(leadId);
 }
 
 /**
@@ -200,5 +146,38 @@ export async function grantContactPermission(formData: FormData) {
 
   await logLeadEvent(leadId, user.id, 'CONTACT_PERMITTED');
 
-  revalidatePath('/dashboard');
+  revalidateLeadPaths(leadId);
+}
+
+/** Generic status change for the non-compliance-workflow statuses. */
+export async function updateLeadStatus(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return;
+
+  const leadId = String(formData.get('leadId') || '');
+  const status = String(formData.get('status') || 'NEW');
+  if (!leadId) return;
+
+  const existingLead = await prisma.lead.findUnique({
+    where: { id: leadId, tenantId: user.tenantId },
+    select: { status: true },
+  });
+  if (!existingLead) return;
+
+  if (existingLead.status === status) {
+    revalidateLeadPaths(leadId);
+    return;
+  }
+
+  await prisma.lead.update({
+    where: { id: leadId, tenantId: user.tenantId },
+    data: { status: status as any },
+  });
+
+  await logLeadEvent(leadId, user.id, 'STATUS_CHANGED', {
+    from: existingLead.status ?? null,
+    to: status,
+  });
+
+  revalidateLeadPaths(leadId);
 }
