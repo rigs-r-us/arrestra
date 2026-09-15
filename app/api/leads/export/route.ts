@@ -39,11 +39,29 @@ export async function GET(req: NextRequest) {
     take: 1000,
   });
 
-  const headers = ['First Name', 'Last Name', 'County', 'Charge', 'Priority', 'Score', 'Status', 'Source', 'Created At'];
+  const headers = [
+    'First Name',
+    'Last Name',
+    'Address',
+    'City',
+    'State',
+    'Zip',
+    'County',
+    'Charge',
+    'Priority',
+    'Score',
+    'Status',
+    'Source',
+    'Created At',
+  ];
 
   const rows = leads.map((lead) => [
     lead.firstName,
     lead.lastName,
+    lead.address,
+    lead.city,
+    lead.state,
+    lead.zip,
     lead.county,
     lead.charge,
     lead.priority,

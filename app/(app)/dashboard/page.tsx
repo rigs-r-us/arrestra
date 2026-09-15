@@ -3,6 +3,12 @@ import { redirect } from 'next/navigation';
 import { auth } from '../../../src/lib/auth';
 import { prisma } from '../../../src/lib/db';
 import { CloseButton } from './CloseButton';
+import {
+  queueForMail,
+  markMailSent,
+  recordClientResponse,
+  grantContactPermission,
+} from './complianceActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -276,6 +282,24 @@ export default async function DashboardPage() {
                                 <p style={detailLabelStyle}>Updated</p>
                                 <p style={detailValueStyle}>{formatDateTime(lead.updatedAt)}</p>
                               </div>
+
+                              <div>
+                                <p style={detailLabelStyle}>Client Responded</p>
+                                <p style={detailValueStyle}>
+                                  {lead.clientResponded
+                                    ? formatDateTime(lead.clientRespondedAt)
+                                    : 'Not yet'}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p style={detailLabelStyle}>Contact Permitted</p>
+                                <p style={detailValueStyle}>
+                                  {lead.contactPermitted
+                                    ? formatDateTime(lead.contactPermittedAt)
+                                    : 'Not yet'}
+                                </p>
+                              </div>
                             </div>
                           </div>
 
@@ -287,7 +311,7 @@ export default async function DashboardPage() {
 
                               <select name="status" defaultValue={lead.status} style={inputStyle}>
                                 <option value="NEW">NEW</option>
-                                <option value="MAILED">MAILED</option>
+                                <option value="REVIEWED">REVIEWED</option>
                                 <option value="QUALIFIED">QUALIFIED</option>
                                 <option value="RETAINED">RETAINED</option>
                                 <option value="CLOSED_WON">CLOSED_WON</option>
@@ -298,7 +322,90 @@ export default async function DashboardPage() {
                               <button type="submit" style={buttonStyle}>
                                 Save Status
                               </button>
+
+                              <p style={{ color: '#9CA3AF', fontSize: 12, margin: 0 }}>
+                                Mail queue, client response, and contact-permitted stages are
+                                managed in the Compliance Workflow panel below.
+                              </p>
                             </form>
+                          </div>
+
+                          <div style={drawerSectionStyle}>
+                            <h3 style={drawerSectionTitleStyle}>Compliance Workflow</h3>
+
+                            <p style={{ color: '#9CA3AF', fontSize: 13, marginBottom: 12 }}>
+                              Each step below only unlocks once the previous one is complete.
+                              Contact permission cannot be granted until the lead is recorded
+                              as having responded to the firm first.
+                            </p>
+
+                            <div style={{ display: 'grid', gap: 10 }}>
+                              <form action={queueForMail}>
+                                <input type="hidden" name="leadId" value={lead.id} />
+                                <button
+                                  type="submit"
+                                  disabled={lead.status !== 'NEW' && lead.status !== 'REVIEWED'}
+                                  style={
+                                    lead.status === 'NEW' || lead.status === 'REVIEWED'
+                                      ? buttonStyle
+                                      : disabledButtonStyle
+                                  }
+                                >
+                                  Queue for Mail
+                                </button>
+                              </form>
+
+                              <form action={markMailSent}>
+                                <input type="hidden" name="leadId" value={lead.id} />
+                                <button
+                                  type="submit"
+                                  disabled={lead.status !== 'MAIL_QUEUED'}
+                                  style={
+                                    lead.status === 'MAIL_QUEUED' ? buttonStyle : disabledButtonStyle
+                                  }
+                                >
+                                  Mark Mail Sent
+                                </button>
+                              </form>
+
+                              <form
+                                action={recordClientResponse}
+                                style={{ display: 'grid', gap: 8 }}
+                              >
+                                <input type="hidden" name="leadId" value={lead.id} />
+                                <textarea
+                                  name="notes"
+                                  placeholder="Optional note on how the client responded"
+                                  rows={2}
+                                  style={{ ...inputStyle, resize: 'vertical' }}
+                                  disabled={lead.clientResponded}
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={lead.clientResponded}
+                                  style={lead.clientResponded ? disabledButtonStyle : buttonStyle}
+                                >
+                                  {lead.clientResponded ? 'Client Responded ✓' : 'Record Client Response'}
+                                </button>
+                              </form>
+
+                              <form action={grantContactPermission}>
+                                <input type="hidden" name="leadId" value={lead.id} />
+                                <button
+                                  type="submit"
+                                  disabled={!lead.clientResponded || lead.contactPermitted}
+                                  style={
+                                    !lead.clientResponded || lead.contactPermitted
+                                      ? disabledButtonStyle
+                                      : buttonStyle
+                                  }
+                                >
+                                  {lead.contactPermitted
+                                    ? 'Contact Permitted ✓'
+                                    : 'Grant Contact Permission'}
+                                </button>
+                              </form>
+                            </div>
                           </div>
 
                           <div style={drawerSectionStyle}>
@@ -315,7 +422,11 @@ export default async function DashboardPage() {
                                     <p style={{ fontWeight: 700 }}>
                                       {event.type === 'STATUS_CHANGED'
                                         ? 'Status changed'
-                                        : event.type}
+                                        : event.type === 'CLIENT_RESPONDED'
+                                          ? 'Client responded'
+                                          : event.type === 'CONTACT_PERMITTED'
+                                            ? 'Contact permission granted'
+                                            : event.type}
                                     </p>
 
                                     <p style={{ color: '#9CA3AF', fontSize: 13, marginTop: 2 }}>
@@ -328,6 +439,13 @@ export default async function DashboardPage() {
                                         {(event.metadata as any)?.to || '—'}
                                       </p>
                                     )}
+
+                                    {event.type === 'CLIENT_RESPONDED' &&
+                                      (event.metadata as any)?.notes && (
+                                        <p style={{ marginTop: 4, fontSize: 14 }}>
+                                          {(event.metadata as any).notes}
+                                        </p>
+                                      )}
                                   </div>
                                 ))}
                               </div>
@@ -344,13 +462,21 @@ export default async function DashboardPage() {
 
                             <div style={complianceGridStyle}>
                               <div style={allowedCardStyle}>Direct Mail ✅</div>
-                              <div style={blockedCardStyle}>Cold SMS ❌</div>
-                              <div style={blockedCardStyle}>Cold Call ❌</div>
-                              <div style={blockedCardStyle}>Cold Email ❌</div>
+                              <div style={lead.contactPermitted ? allowedCardStyle : blockedCardStyle}>
+                                SMS {lead.contactPermitted ? '✅' : '❌'}
+                              </div>
+                              <div style={lead.contactPermitted ? allowedCardStyle : blockedCardStyle}>
+                                Phone {lead.contactPermitted ? '✅' : '❌'}
+                              </div>
+                              <div style={lead.contactPermitted ? allowedCardStyle : blockedCardStyle}>
+                                Email {lead.contactPermitted ? '✅' : '❌'}
+                              </div>
                             </div>
 
                             <p style={{ marginTop: 12, color: '#9CA3AF', fontSize: 13 }}>
-                              Use this as product guidance only. Law firms should confirm local advertising and solicitation rules with counsel.
+                              {lead.contactPermitted
+                                ? `Contact permitted since ${formatDateTime(lead.contactPermittedAt)} — this lead contacted the firm first.`
+                                : 'SMS, phone, and email unlock automatically once Contact Permission is granted below. Use this as product guidance only — confirm local advertising and solicitation rules with counsel.'}
                             </p>
                           </div>
 
@@ -594,4 +720,12 @@ const buttonStyle: React.CSSProperties = {
   color: '#ffffff',
   fontWeight: 700,
   cursor: 'pointer',
+};
+
+const disabledButtonStyle: React.CSSProperties = {
+  ...buttonStyle,
+  background: '#1a2641',
+  border: '1px solid #1a2641',
+  color: '#6b7280',
+  cursor: 'not-allowed',
 };
