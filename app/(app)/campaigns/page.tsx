@@ -69,7 +69,7 @@ export default async function CampaignsPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold">Campaigns</h1>
-        <p className="text-slate-400">
+        <p className="text-muted-foreground">
           Leads grouped by source. Select a card to filter the list below.
         </p>
       </div>
@@ -83,7 +83,7 @@ export default async function CampaignsPage({
             <Link key={row.source} href={isSelected ? '/campaigns' : `/campaigns?source=${encodeURIComponent(row.source)}`}>
               <Card
                 className={
-                  isSelected ? 'border-red-500/60 ring-1 ring-red-500/40' : 'hover:border-slate-600'
+                  isSelected ? 'border-red-400 ring-1 ring-red-200' : 'hover:border-muted-foreground/40'
                 }
               >
                 <CardHeader>
@@ -92,17 +92,17 @@ export default async function CampaignsPage({
                 <CardContent className="space-y-2">
                   <p className="text-3xl font-extrabold">{row._count._all}</p>
                   <div className="flex flex-wrap gap-1.5 text-xs">
-                    <Badge className="border-red-500/40 bg-red-500/15 text-red-300">
+                    <Badge className="border-red-200 bg-red-50 text-red-700">
                       {priorities.HOT ?? 0} HOT
                     </Badge>
-                    <Badge className="border-orange-500/40 bg-orange-500/15 text-orange-300">
+                    <Badge className="border-orange-200 bg-orange-50 text-orange-700">
                       {priorities.WARM ?? 0} WARM
                     </Badge>
-                    <Badge className="border-slate-500/40 bg-slate-500/15 text-slate-300">
+                    <Badge className="border-slate-200 bg-slate-100 text-slate-700">
                       {priorities.LOW ?? 0} LOW
                     </Badge>
                   </div>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {mailedBySource.get(row.source) ?? 0} mailed
                   </p>
                 </CardContent>
@@ -112,7 +112,7 @@ export default async function CampaignsPage({
         })}
 
         {totals.length === 0 && (
-          <p className="text-sm text-slate-400">No leads yet.</p>
+          <p className="text-sm text-muted-foreground">No leads yet.</p>
         )}
       </div>
 
@@ -143,7 +143,7 @@ export default async function CampaignsPage({
                   <TableCell>{lead.county || '—'}</TableCell>
                   <TableCell>{formatDate(lead.createdAt)}</TableCell>
                   <TableCell>
-                    <Link href={`/leads/${lead.id}`} className="text-red-400 hover:underline">
+                    <Link href={`/leads/${lead.id}`} className="text-red-600 hover:underline">
                       View
                     </Link>
                   </TableCell>
@@ -152,7 +152,7 @@ export default async function CampaignsPage({
 
               {leads.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-slate-400">
+                  <TableCell colSpan={6} className="text-muted-foreground">
                     No leads found.
                   </TableCell>
                 </TableRow>

@@ -28,7 +28,7 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold">Settings</h1>
-        <p className="text-slate-400">Manage who on your team has access to Arrestra.</p>
+        <p className="text-muted-foreground">Manage who on your team has access to Arrestra.</p>
       </div>
 
       <Card>
@@ -56,7 +56,7 @@ export default async function SettingsPage() {
                       <select
                         name="role"
                         defaultValue={member.role}
-                        className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+                        className="rounded-md border border-input bg-background px-2 py-1 text-sm"
                       >
                         {ROLES.map((role) => (
                           <option key={role} value={role}>
@@ -101,42 +101,42 @@ export default async function SettingsPage() {
         <CardContent>
           <form action={addTeamMember} className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Name</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Name</label>
               <input
                 name="name"
                 required
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Email</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Email</label>
               <input
                 type="email"
                 name="email"
                 required
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Temporary Password</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Temporary Password</label>
               <input
                 type="password"
                 name="password"
                 required
                 minLength={8}
                 placeholder="Minimum 8 characters"
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Role</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Role</label>
               <select
                 name="role"
                 defaultValue="STAFF"
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 {ROLES.map((role) => (
                   <option key={role} value={role}>
@@ -148,7 +148,7 @@ export default async function SettingsPage() {
 
             <div className="sm:col-span-2">
               <Button type="submit">Add Team Member</Button>
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Share this password with them directly — there's no email invite yet, so this is
                 the only way they'll get it.
               </p>

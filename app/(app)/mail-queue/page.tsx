@@ -37,7 +37,7 @@ export default async function MailQueuePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold">Mail Queue</h1>
-        <p className="text-slate-400">
+        <p className="text-muted-foreground">
           Leads queued for direct-mail outreach. Select the ones you've physically mailed and
           mark them sent.
         </p>
@@ -68,7 +68,7 @@ export default async function MailQueuePage() {
                       <input type="checkbox" name="leadId" value={lead.id} className="h-4 w-4" />
                     </TableCell>
                     <TableCell>
-                      <Badge className="border-slate-500/40 bg-slate-500/15 text-slate-300">
+                      <Badge className="border-slate-200 bg-slate-100 text-slate-700">
                         {lead.priority}
                       </Badge>
                     </TableCell>
@@ -79,7 +79,7 @@ export default async function MailQueuePage() {
                     <TableCell className="max-w-[320px] truncate">{lead.charge || '—'}</TableCell>
                     <TableCell>{formatDate(lead.updatedAt)}</TableCell>
                     <TableCell>
-                      <Link href={`/leads/${lead.id}`} className="text-red-400 hover:underline">
+                      <Link href={`/leads/${lead.id}`} className="text-red-600 hover:underline">
                         View
                       </Link>
                     </TableCell>
@@ -88,7 +88,7 @@ export default async function MailQueuePage() {
 
                 {leads.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-slate-400">
+                    <TableCell colSpan={7} className="text-muted-foreground">
                       Nothing in the mail queue right now.
                     </TableCell>
                   </TableRow>
