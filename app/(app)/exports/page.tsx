@@ -28,7 +28,7 @@ export default async function ExportsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold">Exports</h1>
-        <p className="text-slate-400">
+        <p className="text-muted-foreground">
           Download a CSV of your leads for direct-mail merges. {totalLeads} leads total.
         </p>
       </div>
@@ -40,11 +40,11 @@ export default async function ExportsPage() {
         <CardContent>
           <form action="/api/leads/export" method="get" className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Status</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Status</label>
               <select
                 name="status"
                 defaultValue=""
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">Any status</option>
                 {STATUSES.map((status) => (
@@ -56,11 +56,11 @@ export default async function ExportsPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs text-slate-400">Priority</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Priority</label>
               <select
                 name="priority"
                 defaultValue=""
-                className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="">Any priority</option>
                 {PRIORITIES.map((priority) => (

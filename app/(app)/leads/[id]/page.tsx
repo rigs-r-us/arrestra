@@ -27,16 +27,16 @@ function formatDateTime(date: Date | null) {
 function PriorityBadge({ priority }: { priority: string | null }) {
   const p = priority?.toUpperCase() || 'LOW';
   const classes: Record<string, string> = {
-    HOT: 'bg-red-500/15 text-red-300 border-red-500/40',
-    WARM: 'bg-orange-500/15 text-orange-300 border-orange-500/40',
-    LOW: 'bg-slate-500/15 text-slate-300 border-slate-500/40',
+    HOT: 'bg-red-50 text-red-700 border-red-200',
+    WARM: 'bg-orange-50 text-orange-700 border-orange-200',
+    LOW: 'bg-slate-100 text-slate-700 border-slate-200',
   };
   return <Badge className={classes[p] || classes.LOW}>{p}</Badge>;
 }
 
 function StatusBadge({ status }: { status: string | null }) {
   return (
-    <Badge className="border-indigo-500/40 bg-indigo-500/15 text-indigo-300">
+    <Badge className="border-indigo-200 bg-indigo-50 text-indigo-700">
       {status || 'NEW'}
     </Badge>
   );
@@ -76,14 +76,14 @@ export default async function LeadDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/dashboard" className="text-sm text-slate-400 hover:text-slate-200">
+        <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back to Dashboard
         </Link>
       </div>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-400">Lead Details</p>
+          <p className="text-sm text-muted-foreground">Lead Details</p>
           <h1 className="text-2xl font-extrabold">{name}</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -98,37 +98,37 @@ export default async function LeadDetailPage({
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-xs text-slate-400">Score</p>
+            <p className="text-xs text-muted-foreground">Score</p>
             <p className="font-semibold">{lead.score ?? 0}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">County</p>
+            <p className="text-xs text-muted-foreground">County</p>
             <p className="font-semibold">{lead.county || '—'}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Source</p>
+            <p className="text-xs text-muted-foreground">Source</p>
             <p className="font-semibold">{lead.source}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Status</p>
+            <p className="text-xs text-muted-foreground">Status</p>
             <p className="font-semibold">{lead.status}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Created</p>
+            <p className="text-xs text-muted-foreground">Created</p>
             <p className="font-semibold">{formatDateTime(lead.createdAt)}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Updated</p>
+            <p className="text-xs text-muted-foreground">Updated</p>
             <p className="font-semibold">{formatDateTime(lead.updatedAt)}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Client Responded</p>
+            <p className="text-xs text-muted-foreground">Client Responded</p>
             <p className="font-semibold">
               {lead.clientResponded ? formatDateTime(lead.clientRespondedAt) : 'Not yet'}
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-400">Contact Permitted</p>
+            <p className="text-xs text-muted-foreground">Contact Permitted</p>
             <p className="font-semibold">
               {lead.contactPermitted ? formatDateTime(lead.contactPermittedAt) : 'Not yet'}
             </p>
@@ -146,7 +146,7 @@ export default async function LeadDetailPage({
             <select
               name="status"
               defaultValue={lead.status}
-              className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="NEW">NEW</option>
               <option value="REVIEWED">REVIEWED</option>
@@ -159,7 +159,7 @@ export default async function LeadDetailPage({
             <Button type="submit" className="w-fit">
               Save Status
             </Button>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Mail queue, client response, and contact-permitted stages are managed in the
               Compliance Workflow panel below.
             </p>
@@ -172,7 +172,7 @@ export default async function LeadDetailPage({
           <CardTitle>Compliance Workflow</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Each step below only unlocks once the previous one is complete. Contact permission
             cannot be granted until the lead is recorded as having responded to the firm first.
           </p>
@@ -202,7 +202,7 @@ export default async function LeadDetailPage({
               placeholder="Optional note on how the client responded"
               rows={2}
               disabled={lead.clientResponded}
-              className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm disabled:opacity-50"
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50"
             />
             <Button
               type="submit"
@@ -233,13 +233,13 @@ export default async function LeadDetailPage({
         </CardHeader>
         <CardContent>
           {lead.events.length === 0 ? (
-            <p className="text-sm text-slate-400">No activity yet.</p>
+            <p className="text-sm text-muted-foreground">No activity yet.</p>
           ) : (
             <div className="space-y-3">
               {lead.events.map((event) => (
                 <div key={event.id} className="border-l-2 border-indigo-600 pl-3">
                   <p className="font-semibold">{STATUS_LABELS[event.type] ?? event.type}</p>
-                  <p className="text-xs text-slate-400">{formatDateTime(event.createdAt)}</p>
+                  <p className="text-xs text-muted-foreground">{formatDateTime(event.createdAt)}</p>
                   {event.type === 'STATUS_CHANGED' && event.metadata && (
                     <p className="mt-1 text-sm">
                       {(event.metadata as any)?.from || '—'} →{' '}
@@ -271,7 +271,7 @@ export default async function LeadDetailPage({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 p-2 font-semibold text-emerald-300">
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 font-semibold text-emerald-700">
               Direct Mail ✅
             </div>
             {(['SMS', 'Phone', 'Email'] as const).map((channel) => (
@@ -279,15 +279,15 @@ export default async function LeadDetailPage({
                 key={channel}
                 className={
                   lead.contactPermitted
-                    ? 'rounded-md border border-emerald-500/40 bg-emerald-500/10 p-2 font-semibold text-emerald-300'
-                    : 'rounded-md border border-red-500/40 bg-red-500/10 p-2 font-semibold text-red-300'
+                    ? 'rounded-md border border-emerald-200 bg-emerald-50 p-2 font-semibold text-emerald-700'
+                    : 'rounded-md border border-red-200 bg-red-50 p-2 font-semibold text-red-700'
                 }
               >
                 {channel} {lead.contactPermitted ? '✅' : '❌'}
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs text-muted-foreground">
             {lead.contactPermitted
               ? `Contact permitted since ${formatDateTime(lead.contactPermittedAt)} — this lead contacted the firm first.`
               : 'SMS, phone, and email unlock automatically once Contact Permission is granted above. Use this as product guidance only — confirm local advertising and solicitation rules with counsel.'}

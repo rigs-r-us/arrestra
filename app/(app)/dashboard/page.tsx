@@ -86,7 +86,7 @@ export default async function DashboardPage() {
           Arrestra Lead Dashboard
         </h1>
 
-        <p style={{ color: '#9CA3AF' }}>
+        <p style={{ color: 'var(--muted)' }}>
           View ingested arrest and bail-form leads from TOPICs and future sources.
         </p>
       </div>
@@ -134,8 +134,8 @@ export default async function DashboardPage() {
                 <tr
                   key={lead.id}
                   style={{
-                    borderBottom: '1px solid #1a2641',
-                    backgroundColor: lead.priority === 'HOT' ? 'rgba(229, 57, 53, 0.14)' : '#0F172A',
+                    borderBottom: '1px solid hsl(var(--border))',
+                    backgroundColor: lead.priority === 'HOT' ? 'rgba(229, 57, 53, 0.08)' : 'hsl(var(--card))',
                     boxShadow:
                       lead.priority === 'HOT' ? 'inset 4px 0 0 #dc2626' : 'none',
                   }}
@@ -160,7 +160,7 @@ export default async function DashboardPage() {
                   </td>
 
                   <td style={tdStyle}>
-                    <Link href={`/leads/${lead.id}`} style={{ color: '#ff7a7a', fontWeight: 700 }}>
+                    <Link href={`/leads/${lead.id}`} style={{ color: 'var(--primary)', fontWeight: 700 }}>
                       View
                     </Link>
                   </td>
@@ -200,15 +200,15 @@ const metricGridStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
-  background: '#0F172A',
-  border: '1px solid #1a2641',
+  background: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
   borderRadius: 16,
   padding: 20,
   boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
 };
 
 const labelStyle: React.CSSProperties = {
-  color: '#9CA3AF',
+  color: 'var(--muted)',
   fontSize: 14,
   marginBottom: 8,
 };
@@ -226,12 +226,12 @@ const tableStyle: React.CSSProperties = {
 
 const tableHeaderRowStyle: React.CSSProperties = {
   textAlign: 'left',
-  borderBottom: '1px solid #1a2641',
+  borderBottom: '1px solid hsl(var(--border))',
 };
 
 const thStyle: React.CSSProperties = {
   padding: '12px 8px',
-  color: '#9CA3AF',
+  color: 'var(--muted)',
   fontWeight: 700,
 };
 
