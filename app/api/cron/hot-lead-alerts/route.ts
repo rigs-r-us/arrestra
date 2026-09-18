@@ -68,7 +68,11 @@ function buildEmail(tenantName: string, leads: { id: string; name: string; count
 }
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get('x-cron-secret');
+  // Accept the secret via header OR query param — Amplify's CloudFront layer
+  // doesn't forward arbitrary custom headers to the origin for GET requests,
+  // but query params always reach it, so that's the reliable path for the
+  // EventBridge Scheduler target. The header is kept for local/manual testing.
+  const secret = req.headers.get('x-cron-secret') || req.nextUrl.searchParams.get('secret');
   if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
