@@ -91,11 +91,6 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 space-y-4">
-          <div className="text-center text-sm text-gray-600">
-            <p className="mb-2">Demo credentials:</p>
-            <p><strong>admin@demo.com</strong> / <strong>changeme123</strong></p>
-          </div>
-
           <div className="text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
