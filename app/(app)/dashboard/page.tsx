@@ -69,15 +69,16 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const leads = await prisma.lead.findMany({
-    where: { tenantId: user.tenantId },
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-  });
-
-  const totalLeads = leads.length;
-  const hotLeads = leads.filter((lead) => lead.priority === 'HOT').length;
-  const warmLeads = leads.filter((lead) => lead.priority === 'WARM').length;
+  const [leads, totalLeads, hotLeads, warmLeads] = await Promise.all([
+    prisma.lead.findMany({
+      where: { tenantId: user.tenantId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+    prisma.lead.count({ where: { tenantId: user.tenantId } }),
+    prisma.lead.count({ where: { tenantId: user.tenantId, priority: 'HOT' } }),
+    prisma.lead.count({ where: { tenantId: user.tenantId, priority: 'WARM' } }),
+  ]);
 
   return (
     <main style={{ padding: 24 }}>
