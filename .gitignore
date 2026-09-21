@@ -29,3 +29,4 @@ logs
 # Misc
 dist
 coverage
+tsconfig.tsbuildinfo
