@@ -10,12 +10,17 @@
  *   TOPICS_LIMIT=25 npm run scrape:topics:travis
  */
 
+import { load } from 'cheerio';
+
 const API_BASE = process.env.ARRESTRA_API_BASE || 'http://localhost:3000';
 const API_KEY = process.env.ARRESTRA_API_KEY || '';
 const TOPICS_API_URL =
   'https://topics.txcourts.gov/BailPublic/GetAllBailForms';
 
 const TOPICS_LIMIT = Number(process.env.TOPICS_LIMIT || 25);
+
+// Politeness delay between per-lead detail-page fetches against the court site.
+const DETAIL_FETCH_DELAY_MS = 300;
 
 type TopicsRow = [string, string, string, string, string];
 
@@ -33,12 +38,22 @@ type IngestPayload = {
   caseNumber?: string | null;
   arrestDate?: string | null;
   bookingDate?: string | null;
+  magistrate?: string | null;
+  magistrationDate?: string | null;
   charge?: string | null;
   chargeSeverity?: string | null;
   bondAmount?: number | null;
   bondType?: string | null;
   custodyStatus?: string | null;
   notes?: string | null;
+};
+
+type DetailFields = {
+  arrestDate: string | null;
+  magistrate: string | null;
+  magistrationDate: string | null;
+  bondAmount: number | null;
+  bondType: string | null;
 };
 
 function clean(value?: string | null) {
@@ -109,7 +124,7 @@ function mapTopicsRow(row: TopicsRow): IngestPayload {
   return {
     source: 'topics.travis',
     sourceId: bailFormId,
-    sourceUrl: `https://topics.txcourts.gov/BailPublic/Details/${bailFormId}`,
+    sourceUrl: `https://topics.txcourts.gov/BailPublic/BailPublic/${bailFormId}`,
     rawData: {
       row,
       name: rawName,
@@ -127,6 +142,8 @@ function mapTopicsRow(row: TopicsRow): IngestPayload {
     caseNumber: clean(rawCauseNumber),
     arrestDate: null,
     bookingDate: null,
+    magistrate: null,
+    magistrationDate: null,
     charge: offense,
     chargeSeverity: inferChargeSeverity(offense),
     bondAmount: null,
@@ -134,6 +151,116 @@ function mapTopicsRow(row: TopicsRow): IngestPayload {
     custodyStatus: null,
     notes: location,
   };
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// The top "Arrest"/"Magistration" section renders as <th class="po-d">Label :</th><td>Value</td>
+// rows. Labels vary in whitespace/colon placement across fields, so compare normalized.
+function normalizeLabel(text: string) {
+  return text
+    .replace(/\s+/g, ' ')
+    .replace(/\s*:\s*$/, '')
+    .trim()
+    .toLowerCase();
+}
+
+// Some date/time fields render as two adjacent spans, e.g. "8/9/2024 9:37:00 AM" + "CDT",
+// which td.text() concatenates. Strip a trailing zone abbreviation so `new Date(...)` (used
+// downstream by the ingest route) parses the timestamp instead of choking on/misreading it.
+function stripTrailingTimezone(text: string) {
+  return text.replace(/(AM|PM)\s+[A-Z]{2,5}$/, '$1').trim();
+}
+
+function parseBailAmount(text: string): number | null {
+  const amount = Number(text.replace(/[^0-9.]/g, ''));
+  return Number.isFinite(amount) && text.trim() !== '' ? Math.round(amount) : null;
+}
+
+// The offense/bail-type/bail-amount/cause-number section isn't a semantic table — it's a
+// Bootstrap grid: one header ".po-bottom" block (four <h4> column titles), followed by one
+// ".po-bottom" block per offense (four positional <div> columns), and a final ".po-bottom"
+// block with the "Bail Conditions?" line. A bail form can list multiple offenses/amounts.
+function parseOffenseRows($: ReturnType<typeof load>) {
+  const rows: { offense: string | null; bailType: string | null; bailAmount: number | null }[] = [];
+
+  $('.po-bottom').each((_, block) => {
+    const $block = $(block);
+    if ($block.find('h4').length > 0 || $block.find('h5').length > 0) {
+      return;
+    }
+
+    const cols = $block.find('> .row > div');
+    if (cols.length < 3) {
+      return;
+    }
+
+    const offense = clean($(cols[0]).text());
+    const bailType = clean($(cols[1]).text());
+    const bailAmountText = clean($(cols[2]).text());
+
+    if (!offense && !bailAmountText) {
+      return;
+    }
+
+    rows.push({
+      offense,
+      bailType,
+      bailAmount: bailAmountText ? parseBailAmount(bailAmountText) : null,
+    });
+  });
+
+  return rows;
+}
+
+function fieldValue($: ReturnType<typeof load>, label: string) {
+  const target = normalizeLabel(label);
+  let value: string | null = null;
+
+  $('th.po-d').each((_, el) => {
+    if (normalizeLabel($(el).text()) === target) {
+      value = clean($(el).next('td').text());
+    }
+  });
+
+  return value;
+}
+
+async function fetchBailFormDetail(bailFormId: string): Promise<DetailFields | null> {
+  const url = `https://topics.txcourts.gov/BailPublic/BailPublic/${bailFormId}`;
+
+  try {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      console.warn(`Detail page fetch failed for ${bailFormId}: ${res.status} ${res.statusText}`);
+      return null;
+    }
+
+    const html = await res.text();
+    const $ = load(html);
+
+    const arrestDateRaw = fieldValue($, 'Arrest Date');
+    const magistrationDateRaw = fieldValue($, 'Magistration Date');
+    const offenseRows = parseOffenseRows($);
+
+    const bondAmount =
+      offenseRows.reduce((sum, row) => sum + (row.bailAmount ?? 0), 0) || null;
+    const bondType = offenseRows.find((row) => row.bailType)?.bailType ?? null;
+
+    return {
+      arrestDate: arrestDateRaw ? stripTrailingTimezone(arrestDateRaw) : null,
+      magistrate: fieldValue($, 'Magistrate'),
+      magistrationDate: magistrationDateRaw ? stripTrailingTimezone(magistrationDateRaw) : null,
+      bondAmount,
+      bondType,
+    };
+  } catch (err: any) {
+    console.warn(`Failed to parse detail page for ${bailFormId}:`, err?.message ?? err);
+    return null;
+  }
 }
 
 async function fetchTopicsTravisForms(): Promise<TopicsRow[]> {
@@ -203,9 +330,19 @@ async function main() {
   const limitedRows = rows.slice(0, TOPICS_LIMIT);
   console.log(`Ingesting first ${limitedRows.length} row(s).`);
 
-  const leads = limitedRows.map(mapTopicsRow);
+  for (const row of limitedRows) {
+    const lead = mapTopicsRow(row);
+    const bailFormId = row[4];
 
-  for (const lead of leads) {
+    const detail = await fetchBailFormDetail(bailFormId);
+    if (detail) {
+      lead.arrestDate = detail.arrestDate;
+      lead.magistrate = detail.magistrate;
+      lead.magistrationDate = detail.magistrationDate;
+      lead.bondAmount = detail.bondAmount;
+      lead.bondType = detail.bondType;
+    }
+
     try {
       await ingestLead(lead);
     } catch (err: any) {
@@ -215,6 +352,8 @@ async function main() {
         err?.message ?? err,
       );
     }
+
+    await delay(DETAIL_FETCH_DELAY_MS);
   }
 
   console.log('Done scraping & ingesting TOPICs Travis bail forms.');

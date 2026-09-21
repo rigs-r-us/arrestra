@@ -87,6 +87,8 @@ model Lead {
   caseNumber String?
   arrestDate DateTime?
   bookingDate    DateTime?
+  magistrate         String?
+  magistrationDate   DateTime?
   chargeSeverity String?
   disposition    String?
   courtName      String?
