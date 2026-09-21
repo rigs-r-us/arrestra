@@ -18,6 +18,8 @@ type IngestPayload = {
   caseNumber?: string | null;
   arrestDate?: string | null;
   bookingDate?: string | null;
+  magistrate?: string | null;
+  magistrationDate?: string | null;
   charge?: string | null;
   chargeSeverity?: string | null;
   bondAmount?: number | null;
@@ -134,6 +136,7 @@ export async function POST(req: NextRequest) {
     const fingerprint = buildFingerprint({ ...body, source, fullName });
     const arrestDate = parseDate(body.arrestDate);
     const bookingDate = parseDate(body.bookingDate);
+    const magistrationDate = parseDate(body.magistrationDate);
     const { score, priority } = scoreLead(body);
 
     const lead = await prisma.lead.upsert({
@@ -159,6 +162,8 @@ export async function POST(req: NextRequest) {
         caseNumber: normalizeText(body.caseNumber),
         arrestDate,
         bookingDate,
+        magistrate: normalizeText(body.magistrate),
+        magistrationDate,
         charge: normalizeText(body.charge),
         chargeSeverity: normalizeText(body.chargeSeverity),
         bondAmount: body.bondAmount ?? null,
@@ -188,6 +193,8 @@ export async function POST(req: NextRequest) {
         caseNumber: normalizeText(body.caseNumber),
         arrestDate,
         bookingDate,
+        magistrate: normalizeText(body.magistrate),
+        magistrationDate,
         charge: normalizeText(body.charge),
         chargeSeverity: normalizeText(body.chargeSeverity),
         bondAmount: body.bondAmount ?? null,

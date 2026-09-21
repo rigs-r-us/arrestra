@@ -24,6 +24,15 @@ function formatDateTime(date: Date | null) {
   }).format(date);
 }
 
+function formatCurrency(amount: number | null) {
+  if (amount == null) return '—';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 function PriorityBadge({ priority }: { priority: string | null }) {
   const p = priority?.toUpperCase() || 'LOW';
   const classes: Record<string, string> = {
@@ -112,6 +121,14 @@ export default async function LeadDetailPage({
           <div>
             <p className="text-xs text-muted-foreground">Status</p>
             <p className="font-semibold">{lead.status}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Magistrate</p>
+            <p className="font-semibold">{lead.magistrate || '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Magistration Date</p>
+            <p className="font-semibold">{formatDateTime(lead.magistrationDate)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Created</p>
@@ -260,8 +277,20 @@ export default async function LeadDetailPage({
         <CardHeader>
           <CardTitle>Charge</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <p className="leading-relaxed">{lead.charge || '—'}</p>
+          {(lead.bondAmount != null || lead.bondType) && (
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Bond Type</p>
+                <p className="font-semibold">{lead.bondType || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Bond Amount</p>
+                <p className="font-semibold">{formatCurrency(lead.bondAmount)}</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
